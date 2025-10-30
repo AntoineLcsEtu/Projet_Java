@@ -1,24 +1,31 @@
 package be.lucas.Model;
 
 public class Inscription {
-    private int id;
-    private boolean passenger;
-    private boolean bike;
-    private Ride ride;
+	private int id;                    
+    private Member member;            
+    private int rideId;                
+    private boolean isPassenger;
+    private boolean isBike;
 
-    public Inscription(int id, boolean passenger, boolean bike, Ride ride) {
-        this.id = id;
-        this.passenger = passenger;
-        this.bike = bike;
-        this.ride = ride;
+    public Inscription(Member member, int rideId, boolean isPassenger, boolean isBike) {
+        this.member = member;
+        this.rideId = rideId;
+        this.isPassenger = isPassenger;
+        this.isBike = isBike;
     }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public boolean isPassenger() { return passenger; }
-    public void setPassenger(boolean passenger) { this.passenger = passenger; }
-    public boolean isBike() { return bike; }
-    public void setBike(boolean bike) { this.bike = bike; }
-    public Ride getRide() { return ride; }
-    public void setRide(Ride ride) { this.ride = ride; }
+
+    public Member getMember() { return member; }
+    public void setMember(Member member) { this.member = member; }
+
+    public int getRideId() { return rideId; }
+    public void setRideId(int rideId) { this.rideId = rideId; }
+
+    public boolean isPassenger() { return isPassenger; }
+    public void setPassenger(boolean passenger) { this.isPassenger = passenger; }
+
+    public boolean isBike() { return isBike; }
+    public void setBike(boolean bike) { this.isBike = bike; }
 }

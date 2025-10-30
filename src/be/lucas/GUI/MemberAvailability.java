@@ -1,51 +1,60 @@
 package be.lucas.GUI;
 
-import java.awt.EventQueue;
+import be.lucas.Model.*;
+import be.lucas.DAO.InscriptionDAO;
+import be.lucas.DAO.RideDAO;
 
 import javax.swing.*;
-
-import be.lucas.Model.*;
-
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Date;
+import java.sql.SQLException;
 import java.util.List;
 
 public class MemberAvailability extends JFrame {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private Member member;
+    private static final long serialVersionUID = 1L;
 
-    public MemberAvailability(Member member) {
-        this.member = member;
-        setTitle("Check Availability - " + member.getFirstName() + " " + member.getName());
-        setSize(400, 300);
+    public MemberAvailability(Member member) {  
+        setTitle("Mes Réservations - " + member.getFirstName() + " " + member.getName());
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Données simulées
-        List<Ride> rides = new ArrayList<>();
-        Ride ride = new Ride(1, "Club Address", new Date(), 50.0);
-        Vehicle vehicle = new Vehicle(1, 4, 2);
-        ride.addVehicle(vehicle);
-        rides.add(ride);
-
         JPanel panel = new JPanel(new BorderLayout());
-        JTextArea availabilityText = new JTextArea();
-        availabilityText.setEditable(false);
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
-        StringBuilder availability = new StringBuilder("Ride Availability:\n");
-        for (Ride r : rides) {
-            availability.append("Ride ID: ").append(r.getId())
-                        .append(", Seats Available: ").append(r.getAvailableSeatNumber())
-                        .append(", Bike Spots Available: ").append(r.getAvailableBikeSpotNumber())
-                        .append("\n").append(r.checkDriverNeeds()).append("\n");
+        try {
+            InscriptionDAO inscriptionDAO = new InscriptionDAO();
+            List<Ride> reservedRides = inscriptionDAO.getRidesByMemberId(member.getId());
+
+            StringBuilder sb = new StringBuilder("=== MES RÉSERVATIONS ===\n\n");
+            if (reservedRides.isEmpty()) {
+                sb.append("Vous n'avez réservé aucun ride pour le moment.\n");
+            } else {
+                RideDAO rideDAO = new RideDAO();
+                for (int i = 0; i < reservedRides.size(); i++) {
+                    Ride ride = rideDAO.getRideWithDetails(reservedRides.get(i).getId());
+                    if (ride == null) continue;
+
+                    sb.append("Réservation ").append(i + 1).append(" :\n");
+                    sb.append("  Ride ID: ").append(ride.getId()).append("\n");
+                    sb.append("  Lieu: ").append(ride.getStartPlace()).append("\n");
+                    sb.append("  Date: ").append(ride.getStartDate()).append("\n");
+                    sb.append("  Frais: ").append(ride.getFee()).append(" €\n");
+                    sb.append("  Sièges disponibles: ").append(ride.getAvailableSeatNumber()).append("\n");
+                    sb.append("  Places vélo disponibles: ").append(ride.getAvailableBikeSpotNumber()).append("\n");
+                    sb.append("  Conducteurs: ").append(ride.checkDriverNeeds()).append("\n");
+                    sb.append("----------------------------------------\n");
+                }
+            }
+            textArea.setText(sb.toString());
+
+        } catch (SQLException e) {
+            textArea.setText("Erreur DB : " + e.getMessage());
+            e.printStackTrace();
         }
-        availabilityText.setText(availability.toString());
 
-        panel.add(new JScrollPane(availabilityText), BorderLayout.CENTER);
+        panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
         add(panel);
     }
 }

@@ -1,31 +1,21 @@
 package be.lucas.GUI;
 
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
-import be.lucas.Model.*;
-
+import be.lucas.Model.Member;
 import javax.swing.*;
 import java.awt.*;
-import java.util.Date;
 
 public class MemberDashboard extends JFrame {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private Member member;
+    private static final long serialVersionUID = 1L;
 
-    public MemberDashboard(Member member) {
-        this.member = member;
+    public MemberDashboard(Member member) {  
         setTitle("Member Dashboard - " + member.getFirstName() + " " + member.getName());
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(4, 1));
+        panel.setLayout(new GridLayout(4, 1, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JButton reserveButton = new JButton("Reserve a Ride");
         JButton offerVehicleButton = new JButton("Offer a Vehicle");
