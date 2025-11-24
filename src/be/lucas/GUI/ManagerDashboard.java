@@ -8,16 +8,14 @@ import be.lucas.Model.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Date;
 
-import javax.swing.*;
-import java.awt.*;
 
 public class ManagerDashboard extends JFrame {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
 	private Manager manager;
 
     public ManagerDashboard(Manager manager) {

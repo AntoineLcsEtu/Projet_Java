@@ -2,6 +2,10 @@ package be.lucas.Model;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import be.lucas.DAO.InscriptionDAO;
+import be.lucas.DAO.RideDAO;
+
 import java.util.Date;
 
 public class Ride {
@@ -12,6 +16,16 @@ public class Ride {
     private List<Inscription> inscriptions;
     private List<Vehicle> vehicles;
 
+    private int categoryId;
+
+    public int getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
+    
     public Ride(int id, String startPlace, Date startDate, double fee) {
         this.id = id;
         this.startPlace = startPlace;  
@@ -40,6 +54,10 @@ public class Ride {
         return Math.max(0, total - used);
     }
 
+    public int getTotalSeatNumber() {
+        return vehicles.stream().mapToInt(Vehicle::getSeatNumber).sum();
+    }
+
     public int getTotalBikeSpotNumber() {
         return vehicles.stream().mapToInt(Vehicle::getBikeSpotNumber).sum();
     }
@@ -64,6 +82,10 @@ public class Ride {
             ? "Besoin de " + (vehicles.size() - drivers) + " conducteur(s)" 
             : "Tous les véhicules ont un conducteur";
     }
+    
+    public boolean isDriver(Member member) {
+        return vehicles.stream().anyMatch(v -> v.getDriver() != null && v.getDriver().getId() == member.getId());
+    }
 
     public void addVehicle(Vehicle vehicle) {
         this.vehicles.add(vehicle);
@@ -77,6 +99,18 @@ public class Ride {
         this.startPlace = startPlace;  
     }
 
+    public boolean registerMember(Member member, boolean isPassenger, boolean isBike) throws Exception {
+        InscriptionDAO dao = new InscriptionDAO();
+        return dao.registerMember(member, this.id, isPassenger, isBike);
+    }
+
+    public boolean assignMemberVehicle(Member member) throws Exception {
+        Vehicle vehicle = member.getVehicle();
+        if (vehicle == null) return false;
+        return new RideDAO().assignVehicleToRide(vehicle.getId(), this.id);
+    }
+    
+    
     public Date getStartDate() { return startDate; }
     public void setStartDate(Date startDate) { this.startDate = startDate; }
 
@@ -85,4 +119,15 @@ public class Ride {
 
     public List<Inscription> getRegistrations() { return inscriptions; }
     public List<Vehicle> getVehicles() { return vehicles; }
+    
+    
+    private Category category;
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }

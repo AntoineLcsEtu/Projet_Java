@@ -5,7 +5,8 @@ import java.sql.*;
 
 public class DBConnection {
 
-    private static final String DB_PATH = "C:\\dev\\java\\eclipse-2025.06\\workspace\\Projet_Exam\\database\\Club_Velo.accdb";
+    private static final String DB_PATH 
+    	= "C:\\dev\\java\\eclipse-2025.06\\workspace\\Projet_Exam\\database\\Club_Velo.accdb";
 
     public static Connection getConnection() throws SQLException {
         File dbFile = new File(DB_PATH);

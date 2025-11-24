@@ -1,24 +1,21 @@
 package be.lucas.GUI;
 
-import java.awt.EventQueue;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
+
 
 import be.lucas.Model.*;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TreasurerDashboard extends JFrame {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
 	private Treasurer treasurer;
 
     public TreasurerDashboard(Treasurer treasurer) {
@@ -34,7 +31,13 @@ public class TreasurerDashboard extends JFrame {
         JButton verifyFeesButton = new JButton("Verify Membership Fees");
         JButton payDriverButton = new JButton("Manage Payments");
 
-        verifyFeesButton.addActionListener(e -> new TreasurerVerifyFees(treasurer).setVisible(true));
+        verifyFeesButton.addActionListener(e -> {
+			try {
+				new TreasurerVerifyFees(treasurer).setVisible(true);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		});
         payDriverButton.addActionListener(e -> new TreasurerManagePayments(treasurer).setVisible(true));
 
         panel.add(verifyFeesButton);

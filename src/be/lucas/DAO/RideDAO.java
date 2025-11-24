@@ -37,7 +37,7 @@ public class RideDAO {
                         rs.getTimestamp("StartDate"),
                         rs.getDouble("Fee")
                     );
-
+                    currentRide.setCategoryId(rs.getInt("CategoryID"));
                     rides.add(currentRide);
                     currentRideId = rideId;
                 }
@@ -55,6 +55,7 @@ public class RideDAO {
         }
         return rides;
     }
+    
     
     public Ride getRideWithDetails(int rideId) throws SQLException {
         String sql = """
@@ -182,5 +183,102 @@ public class RideDAO {
             ps.setInt(2, vehicleId);
             return ps.executeUpdate() > 0;
         }
+    }
+    
+    public List<Member> getDriversFromCompletedRides() throws SQLException {
+        List<Member> drivers = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT m.PersonID, p.Name, p.FirstName, p.Phone, p.Password,
+                   m.Balance, v.SeatNumber, v.BikeSpotNumber
+            FROM Ride r
+            JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
+            JOIN Vehicle v ON rv.VehicleID = v.VehicleID
+            JOIN Member m ON v.DriverID = m.PersonID
+            JOIN Person p ON m.PersonID = p.PersonID
+            WHERE r.StartDate < ?
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setTimestamp(1, new java.sql.Timestamp(System.currentTimeMillis()));
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Member driver = new Member(
+                    rs.getString("Name"),
+                    rs.getString("FirstName"),
+                    rs.getString("Phone"),
+                    rs.getInt("PersonID"),
+                    rs.getString("Password"),
+                    rs.getDouble("Balance")
+                );
+
+                Vehicle vehicle = new Vehicle(0, rs.getInt("SeatNumber"), rs.getInt("BikeSpotNumber"));
+                vehicle.setDriver(driver);
+                driver.setDrivenVehicle(vehicle);
+
+                drivers.add(driver);
+            }
+        }
+        return drivers;
+    }
+    
+    public int insertRide(Ride ride) throws SQLException {
+        String sql = """
+            INSERT INTO Ride (StartPlace, StartDate, Fee, CategoryID)
+            VALUES (?, ?, ?, ?)
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, ride.getStartPlace());
+            ps.setTimestamp(2, new java.sql.Timestamp(ride.getStartDate().getTime()));
+            ps.setDouble(3, ride.getFee());
+            ps.setInt(4, ride.getCategoryId());
+
+            if (ps.executeUpdate() > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return -1;
+    }
+    
+    public int insertRideManualId(Ride ride, int categoryId) throws SQLException {
+        String maxSql = "SELECT COALESCE(MAX(RideID), 0) AS MaxID FROM Ride";
+        int newId = 1; 
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement maxPs = conn.prepareStatement(maxSql);
+             ResultSet rs = maxPs.executeQuery()) {
+            if (rs.next()) {
+                newId = rs.getInt("MaxID") + 1;
+            }
+        }
+
+        String insertSql = """
+            INSERT INTO Ride (RideID, StartPlace, StartDate, Fee, CategoryID)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(insertSql)) {
+
+            ps.setInt(1, newId);
+            ps.setString(2, ride.getStartPlace());
+            ps.setTimestamp(3, new java.sql.Timestamp(ride.getStartDate().getTime()));
+            ps.setDouble(4, ride.getFee());
+            ps.setInt(5, categoryId);
+
+            if (ps.executeUpdate() > 0) {
+                ride.setId(newId);           
+                return newId;
+            }
+        }
+        return -1; 
     }
 }

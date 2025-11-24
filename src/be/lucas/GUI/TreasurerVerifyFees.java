@@ -1,51 +1,41 @@
 package be.lucas.GUI;
 
-import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import be.lucas.Model.*;
-
+import be.lucas.Model.Treasurer;
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TreasurerVerifyFees extends JFrame {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private Treasurer treasurer;
+    private static final long serialVersionUID = 1L;
+    @SuppressWarnings("unused")
+    private final Treasurer treasurer;
 
-    public TreasurerVerifyFees(Treasurer treasurer) {
+    public TreasurerVerifyFees(Treasurer treasurer) throws Exception {
         this.treasurer = treasurer;
-        setTitle("Verify Membership Fees - " + treasurer.getFirstName() + " " + treasurer.getName());
-        setSize(400, 300);
+        setTitle("Vérification des Cotisations");
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Données simulées
-        List<Member> members = new ArrayList<>();
-        members.add(new Member("Doe", "John", "123456789", 1, "pass123", 100.0));
-        members.get(0).setMembershipPaid(true);
-        members.add(new Member("Smith", "Bob", "987654321", 4, "pass456", 50.0));
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JPanel panel = new JPanel(new BorderLayout());
+        JLabel title = new JLabel("RAPPORT DE VÉRIFICATION DES COTISATIONS", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setForeground(new Color(0, 102, 0));
+        mainPanel.add(title, BorderLayout.NORTH);
+
         JTextArea reportText = new JTextArea();
         reportText.setEditable(false);
+        reportText.setFont(new Font("Consolas", Font.PLAIN, 14));
+        reportText.setBackground(new Color(248, 255, 248));
+        reportText.setMargin(new Insets(10, 10, 10, 10));
 
-        StringBuilder report = new StringBuilder("Membership Status:\n");
-        for (Member member : members) {
-            treasurer.verifyMembershipFees(member);
-            report.append(member.getFirstName()).append(" ").append(member.getName())
-                  .append(": ").append(member.isMembershipPaid() ? "Paid" : "Not Paid").append("\n");
-        }
-        reportText.setText(report.toString());
+        Object[] result = treasurer.verifyMembershipFees();  
+        String   report = (String) result[0];
+        
 
-        panel.add(new JScrollPane(reportText), BorderLayout.CENTER);
-        add(panel);
+        reportText.setText(report);
+        mainPanel.add(new JScrollPane(reportText), BorderLayout.CENTER);
+        add(mainPanel);    
     }
 }

@@ -11,9 +11,7 @@ import java.sql.SQLException;
 
 public class ManagerDAO extends PersonDAO {
 
-    /**
-     * Charge un Manager complet avec sa Category
-     */
+   
     public Manager getManagerByPersonId(int personId) throws SQLException {
         String sql = """
             SELECT p.*, ma.ManagerID, ma.CategoryID

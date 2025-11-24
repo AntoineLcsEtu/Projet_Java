@@ -1,5 +1,10 @@
 package be.lucas.Model;
 
+import java.sql.SQLException;
+import java.util.List;
+
+import be.lucas.DAO.RideDAO;
+
 public class Manager extends Person {
     private Category category;
 
@@ -14,12 +19,23 @@ public class Manager extends Person {
         }
     }
 
+    public int publishRideWithDB(Ride ride, int categoryId) throws SQLException {
+        RideDAO rideDAO = new RideDAO();
+        return rideDAO.insertRideManualId(ride, categoryId);
+    }
+    
     public void calculateRideFee(Ride ride) {
         int totalSeats = ride.getVehicles().stream().mapToInt(Vehicle::getSeatNumber).sum();
         int totalBikeSpots = ride.getVehicles().stream().mapToInt(Vehicle::getBikeSpotNumber).sum();
         ride.setFee(totalSeats * 10.0 + totalBikeSpots * 5.0);
     }
-
+    
+    public List<Ride> getAllRides() throws Exception {
+        RideDAO dao = new RideDAO();
+        return dao.getAllRides();
+    }
+    
+    
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
 }

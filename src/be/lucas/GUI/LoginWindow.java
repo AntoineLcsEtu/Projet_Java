@@ -3,22 +3,15 @@ package be.lucas.GUI;
 import be.lucas.Model.Member;
 import be.lucas.Model.Manager;
 import be.lucas.Model.Treasurer;
-import be.lucas.DAO.PersonDAO;
-import be.lucas.DAO.MemberDAO;
-import be.lucas.DAO.ManagerDAO;
-import be.lucas.DAO.TreasurerDAO;
+import be.lucas.Model.Person;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
 
 public class LoginWindow extends JFrame {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 2L;
-	private JTextField idField;
+    private static final long serialVersionUID = 2L;
+    private JTextField idField;
     private JPasswordField passwordField;
     private JButton loginButton;
 
@@ -40,7 +33,7 @@ public class LoginWindow extends JFrame {
         panel.add(passwordField);
 
         loginButton = new JButton("Se connecter");
-        panel.add(new JLabel()); 
+        panel.add(new JLabel());
         panel.add(loginButton);
 
         add(panel);
@@ -53,42 +46,40 @@ public class LoginWindow extends JFrame {
             int id = Integer.parseInt(idField.getText().trim());
             String password = new String(passwordField.getPassword());
 
-            // DAO pour login
-            PersonDAO personDAO = new PersonDAO();
-            String role = personDAO.login(id, password);
+            Person person = Person.authenticate(id, password);
 
-            if (role != null) {
-                switch (role) {
-                    case "MEMBER" -> {
-                        Member member = new MemberDAO().getMemberByPersonId(id);
-                        if (member != null) {
-                            new MemberDashboard(member).setVisible(true);
-                        }
-                    }
-                    case "MANAGER" -> {
-                        Manager manager = new ManagerDAO().getManagerByPersonId(id);
-                        if (manager != null) {
-                            new ManagerDashboard(manager).setVisible(true);
-                        }
-                    }
-                    case "TREASURER" -> {
-                        Treasurer treasurer = new TreasurerDAO().getTreasurerByPersonId(id);
-                        if (treasurer != null) {
-                            new TreasurerDashboard(treasurer).setVisible(true);
-                        }
-                    }
+            if (person != null) {
+
+                if (person instanceof Member member) {
+                    new MemberDashboard(member).setVisible(true);
+
+                } else if (person instanceof Manager manager) {
+                    new ManagerDashboard(manager).setVisible(true);
+
+                } else if (person instanceof Treasurer treasurer) {
+                    new TreasurerDashboard(treasurer).setVisible(true);
                 }
-                dispose(); 
+
+                dispose();
+
             } else {
-                JOptionPane.showMessageDialog(this, "Identifiants incorrects", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Identifiants incorrects",
+                        "Erreur",
+                        JOptionPane.ERROR_MESSAGE);
             }
+
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "L'ID doit être un nombre", "Erreur", JOptionPane.ERROR_MESSAGE);
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erreur base de données : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "L'ID doit être un nombre",
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erreur inattendue : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Erreur inattendue : " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

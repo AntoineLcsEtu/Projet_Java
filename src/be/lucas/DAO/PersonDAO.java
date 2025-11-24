@@ -8,11 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class PersonDAO {
-
-    /**
-     * Vérifie le login (PersonID + mot de passe)
-     * Retourne le rôle : "MEMBER", "MANAGER", "TREASURER" ou null
-     */
+	
     public String login(int personId, String password) throws SQLException {
         String sql = """
             SELECT p.Password,
@@ -38,4 +34,5 @@ public class PersonDAO {
         }
         return null;
     }
+    
 }

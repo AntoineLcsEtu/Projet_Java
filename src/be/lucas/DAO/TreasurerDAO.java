@@ -11,9 +11,7 @@ import java.sql.SQLException;
 
 public class TreasurerDAO extends PersonDAO {
 
-    /**
-     * Charge un Treasurer
-     */
+	
     public Treasurer getTreasurerByPersonId(int personId) throws SQLException {
         String sql = """
             SELECT p.*, t.TreasurerID

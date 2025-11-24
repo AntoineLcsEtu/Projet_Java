@@ -4,6 +4,11 @@ package be.lucas.Model;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.lucas.DAO.InscriptionDAO;
+import be.lucas.DAO.MemberDAO;
+import be.lucas.DAO.RideDAO;
+import be.lucas.DAO.VehicleDAO;
+
 public class Member extends Person {
     private double balance;
     private List<Bike> bikes;
@@ -46,7 +51,83 @@ public class Member extends Person {
             throw new IllegalStateException("Member must belong to at least one category");
         }
     }
+    
+    public List<Ride> getReservedRides() throws Exception {
+        InscriptionDAO dao = new InscriptionDAO();
+        return dao.getRidesByMemberId(this.getId());
+    }
+    public List<Ride> getEligibleRidesForVehicleOffer() throws Exception {
+        RideDAO dao = new RideDAO();
+        return dao.getRidesForVehicleOffer(this.getId());
+    }
 
+
+    public Vehicle getVehicle() throws Exception {
+        VehicleDAO dao = new VehicleDAO();
+        Vehicle vehicle = dao.getVehicleByDriverId(this.getId());
+        if (vehicle != null) vehicle.setDriver(this);
+        return vehicle;
+    }
+
+    public boolean assignVehicleToRide(Vehicle vehicle, Ride ride) throws Exception {
+        RideDAO dao = new RideDAO();
+        boolean success = dao.assignVehicleToRide(vehicle.getId(), ride.getId());
+        if (success) {
+            ride.addVehicle(vehicle);
+            vehicle.addRide(ride);
+        }
+        return success;
+    }
+
+
+    
+
+
+    public boolean canPayMembership() throws Exception {
+        double totalFee = calculateMembershipFee();
+        return getBalance() >= totalFee;
+    }
+
+    public boolean payMembership() throws Exception {
+        double totalFee = calculateMembershipFee();
+        if (getBalance() < totalFee) return false;
+
+        double newBalance = getBalance() - totalFee;
+
+        MemberDAO dao = new MemberDAO();
+        boolean success = dao.updateMembershipPaid(getId(), newBalance, true);
+        if (success) {
+            setBalance(newBalance);
+            setMembershipPaid(true);
+        }
+        return success;
+    }
+    public double calculateMembershipFee() throws Exception {
+        int categoryCount = getCategoryCount(); 
+        return 20.0 + categoryCount * 5.0;
+    }
+
+    public int getCategoryCount() throws Exception {
+        MemberDAO dao = new MemberDAO();
+        return dao.getCategoryCountForMember(getId());
+    }
+    
+
+    public List<Ride> getAvailableRides() throws Exception {
+        RideDAO dao = new RideDAO();
+        return dao.getAvailableRidesForMember(getId());
+    }
+
+
+    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike) throws Exception {
+        return ride.registerMember(this, isPassenger, isBike);
+    }
+
+
+    public boolean offerVehicleForRide(Ride ride) throws Exception {
+        return ride.assignMemberVehicle(this);
+    }
+    
     public double getBalance() { return balance; }
     public void setBalance(double balance) { this.balance = balance; }
     public List<Bike> getBikes() { return bikes; }

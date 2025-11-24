@@ -1,18 +1,15 @@
 package be.lucas.GUI;
 
 import be.lucas.Model.Member;
-import be.lucas.DAO.MemberDAO;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
 
 public class MemberPayMembership extends JFrame {
     private static final long serialVersionUID = 1L;
     private Member member;
     private JLabel balanceLabel;
     private JLabel feeLabel;
-    private MemberDAO memberDAO = new MemberDAO();
 
     public MemberPayMembership(Member member) {
         this.member = member;
@@ -38,6 +35,8 @@ public class MemberPayMembership extends JFrame {
 
         JButton payButton = new JButton("Payer la cotisation");
         payButton.setFont(new Font("Arial", Font.BOLD, 14));
+        payButton.setBackground(new Color(0, 128, 0));
+        payButton.setForeground(Color.WHITE);
         panel.add(payButton);
 
         payButton.addActionListener(e -> payMembership());
@@ -47,61 +46,55 @@ public class MemberPayMembership extends JFrame {
     }
 
     private void refreshInfo() {
-        balanceLabel.setText("Solde actuel : " + member.getBalance() + " €");
+        balanceLabel.setText("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
 
         try {
-            int categoryCount = memberDAO.getCategoryCountForMember(member.getId());
-            double baseFee = 20.0;
-            double totalFee = baseFee + (categoryCount * 5.0);
+            int categoryCount = member.getCategoryCount();
+            double totalFee = member.calculateMembershipFee();
 
             feeLabel.setText(
                 "<html><center>" +
-                "Cotisation : " + baseFee + " € + " + categoryCount + " catégorie(s) × 5 €<br>" +
-                "<b>Total à payer : " + totalFee + " €</b>" +
+                    "Cotisation : 20 € + " + categoryCount + " catégorie(s) × 5 €<br>" +
+                    "<b style='font-size:16px; color:#006400;'>Total à payer : " + 
+                    String.format("%.2f", totalFee) + " €</b>" +
                 "</center></html>"
             );
-        } catch (SQLException e) {
-            feeLabel.setText("Erreur de chargement des catégories.");
+        } catch (Exception e) {
+            feeLabel.setText("<html><center><span style='color:red;'>Erreur de calcul</span></center></html>");
             e.printStackTrace();
         }
     }
 
     private void payMembership() {
         try {
-            int categoryCount = memberDAO.getCategoryCountForMember(member.getId());
-            double totalFee = 20.0 + (categoryCount * 5.0);
+            double totalFee = member.calculateMembershipFee();
 
-            if (member.getBalance() < totalFee) {
+            if (!member.canPayMembership()) {
                 JOptionPane.showMessageDialog(this,
-                    "Solde insuffisant !\n" +
-                    "Montant requis : " + totalFee + " €\n" +
-                    "Votre solde : " + member.getBalance() + " €",
+                    "<html><center><b>Solde insuffisant !</b><br>" +
+                    "Montant requis : <b>" + String.format("%.2f", totalFee) + " €</b><br>" +
+                    "Votre solde : <b>" + String.format("%.2f", member.getBalance()) + " €</b></center></html>",
                     "Paiement impossible", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            double newBalance = member.getBalance() - totalFee;
-
-            boolean success = memberDAO.updateMembershipPaid(
-                member.getId(), newBalance, true
-            );
+            boolean success = member.payMembership();
 
             if (success) {
-                member.setBalance(newBalance);
-                member.setMembershipPaid(true);
                 refreshInfo();
                 JOptionPane.showMessageDialog(this,
-                    "Cotisation payée avec succès !\n" +
-                    "Montant débité : " + totalFee + " €\n" +
-                    "Nouveau solde : " + newBalance + " €",
+                    "<html><center>Cotisation payée avec succès !<br>" +
+                    "Montant débité : <b>" + String.format("%.2f", totalFee) + " €</b><br>" +
+                    "Nouveau solde : <b>" + String.format("%.2f", member.getBalance()) + " €</b></center></html>",
                     "Succès", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this, "Échec de la mise à jour.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Échec du paiement.", "Erreur", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (SQLException ex) {
+
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
-                "Erreur base de données : " + ex.getMessage(),
-                "Erreur DB", JOptionPane.ERROR_MESSAGE);
+                "Erreur lors du paiement : " + ex.getMessage(),
+                "Erreur", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
         }
     }

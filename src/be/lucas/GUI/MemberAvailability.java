@@ -1,12 +1,10 @@
 package be.lucas.GUI;
 
-import be.lucas.Model.*;
-import be.lucas.DAO.InscriptionDAO;
-import be.lucas.DAO.RideDAO;
+import be.lucas.Model.Member;
+import be.lucas.Model.Ride;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.List;
 
 public class MemberAvailability extends JFrame {
@@ -24,17 +22,14 @@ public class MemberAvailability extends JFrame {
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
         try {
-            InscriptionDAO inscriptionDAO = new InscriptionDAO();
-            List<Ride> reservedRides = inscriptionDAO.getRidesByMemberId(member.getId());
+            List<Ride> reservedRides = member.getReservedRides();
 
             StringBuilder sb = new StringBuilder("=== MES RÉSERVATIONS ===\n\n");
             if (reservedRides.isEmpty()) {
                 sb.append("Vous n'avez réservé aucun ride pour le moment.\n");
             } else {
-                RideDAO rideDAO = new RideDAO();
                 for (int i = 0; i < reservedRides.size(); i++) {
-                    Ride ride = rideDAO.getRideWithDetails(reservedRides.get(i).getId());
-                    if (ride == null) continue;
+                    Ride ride = reservedRides.get(i);
 
                     sb.append("Réservation ").append(i + 1).append(" :\n");
                     sb.append("  Ride ID: ").append(ride.getId()).append("\n");
@@ -49,8 +44,8 @@ public class MemberAvailability extends JFrame {
             }
             textArea.setText(sb.toString());
 
-        } catch (SQLException e) {
-            textArea.setText("Erreur DB : " + e.getMessage());
+        } catch (Exception e) {
+            textArea.setText("Erreur : " + e.getMessage());
             e.printStackTrace();
         }
 

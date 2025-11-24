@@ -1,19 +1,15 @@
 package be.lucas.GUI;
 
-import be.lucas.Model.*;
-import be.lucas.DAO.RideDAO;
-import be.lucas.DAO.InscriptionDAO;
+import be.lucas.Model.Member;
+import be.lucas.Model.Ride;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.List;
 
 public class MemberReserveRide extends JFrame {
     private static final long serialVersionUID = 1L;
     private Member member;
-    private RideDAO rideDAO = new RideDAO();
-    private InscriptionDAO inscriptionDAO = new InscriptionDAO();
 
     public MemberReserveRide(Member member) {
         this.member = member;
@@ -33,11 +29,10 @@ public class MemberReserveRide extends JFrame {
         ridesPanel.setLayout(new GridLayout(0, 1, 10, 10));
 
         try {
-            List<Ride> availableRides = rideDAO.getAvailableRidesForMember(member.getId());
+            List<Ride> availableRides = member.getAvailableRides();
 
             if (availableRides.isEmpty()) {
-                JLabel noRides = new JLabel("Aucun ride disponible pour le moment.");
-                noRides.setHorizontalAlignment(SwingConstants.CENTER);
+                JLabel noRides = new JLabel("Aucun ride disponible pour le moment.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
                 for (Ride ride : availableRides) {
@@ -45,8 +40,8 @@ public class MemberReserveRide extends JFrame {
                     ridesPanel.add(rideButton);
                 }
             }
-        } catch (SQLException e) {
-            JLabel error = new JLabel("Erreur DB : " + e.getMessage());
+        } catch (Exception e) {
+            JLabel error = new JLabel("Erreur : " + e.getMessage(), SwingConstants.CENTER);
             error.setForeground(Color.RED);
             ridesPanel.add(error);
             e.printStackTrace();
@@ -104,25 +99,28 @@ public class MemberReserveRide extends JFrame {
 
             try {
                 if (isPassenger || isBike) {
-                    boolean success = inscriptionDAO.registerMember(
-                        member, ride.getId(), isPassenger, isBike
-                    );
+                    boolean success = member.reserveRide(ride, isPassenger, isBike);
                     if (!success) {
-                        JOptionPane.showMessageDialog(this, "Places insuffisantes.");
+                        JOptionPane.showMessageDialog(this, "Places insuffisantes ou déjà réservé.");
                         return;
                     }
                 }
 
                 if (isDriver) {
-                    JOptionPane.showMessageDialog(this, "Fonction conducteur en cours...");
+                    boolean successDriver = member.offerVehicleForRide(ride);
+                    if (!successDriver) {
+                        JOptionPane.showMessageDialog(this, "Vous n'avez pas de véhicule ou êtes déjà conducteur.");
+                        return;
+                    }
                 }
 
                 JOptionPane.showMessageDialog(this, "Réservation confirmée !");
                 dispose();
                 new MemberReserveRide(member).setVisible(true);
 
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Erreur DB : " + ex.getMessage());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }

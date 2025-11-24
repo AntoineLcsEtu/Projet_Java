@@ -1,5 +1,10 @@
 package be.lucas.Model;
 
+import be.lucas.DAO.PersonDAO;
+import be.lucas.DAO.MemberDAO;
+import be.lucas.DAO.ManagerDAO;
+import be.lucas.DAO.TreasurerDAO;
+
 public abstract class Person {
     protected String name;
     protected String firstName;
@@ -17,6 +22,21 @@ public abstract class Person {
 
     public boolean login(int id, String password) {
         return this.id == id && this.password.equals(password);
+    }
+
+    public static Person authenticate(int id, String password) throws Exception {
+        PersonDAO personDAO = new PersonDAO();
+        String role = personDAO.login(id, password);
+
+        if (role != null) {
+            return switch (role) {
+                case "MEMBER"   -> new MemberDAO().getMemberByPersonId(id);
+                case "MANAGER"  -> new ManagerDAO().getManagerByPersonId(id);
+                case "TREASURER"-> new TreasurerDAO().getTreasurerByPersonId(id);
+                default         -> null;
+            };
+        }
+        return null;
     }
 
     public String getName() { return name; }

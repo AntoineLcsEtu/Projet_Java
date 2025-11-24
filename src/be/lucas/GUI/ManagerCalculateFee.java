@@ -1,10 +1,8 @@
 package be.lucas.GUI;
 
-import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
 import be.lucas.Model.*;
 
@@ -17,6 +15,7 @@ public class ManagerCalculateFee extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	@SuppressWarnings("unused")
 	private Manager manager;
 
     public ManagerCalculateFee(Manager manager) {
@@ -38,7 +37,6 @@ public class ManagerCalculateFee extends JFrame {
         calculateButton.addActionListener(e -> {
             try {
                 int rideId = Integer.parseInt(rideIdField.getText());
-                // Données simulées
                 Ride ride = new Ride(rideId, "Club Address", new Date(), 0.0);
                 Vehicle vehicle = new Vehicle(1, 4, 2);
                 ride.addVehicle(vehicle);

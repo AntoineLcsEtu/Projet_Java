@@ -69,6 +69,27 @@ public class InscriptionDAO {
         if (isPassenger && ride.getAvailableSeatNumber() <= 0) return false;
         if (isBike && ride.getAvailableBikeSpotNumber() <= 0) return false;
 
+        String addCategorySql = """
+                INSERT INTO Member_Category (MemberID, CategoryID)
+                SELECT m.MemberID, r.CategoryID
+                FROM Member m
+                JOIN Ride r ON r.RideID = ?
+                WHERE m.PersonID = ?
+                  AND r.CategoryID IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1 FROM Member_Category mc
+                      WHERE mc.MemberID = m.MemberID
+                        AND mc.CategoryID = r.CategoryID
+                  )
+                """;
+
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(addCategorySql)) {
+                ps.setInt(1, rideId);        // ← Condition sur RideID
+                ps.setInt(2, member.getId());
+                ps.executeUpdate(); // Idempotent → OK si 0
+            }
+
         String sql = """
             INSERT INTO Inscription (InscriptionID, MemberID, RideID, IsPassenger, IsBike)
             VALUES (?, ?, ?, ?, ?)
