@@ -9,7 +9,33 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class ManagerDAO extends PersonDAO {
+public class ManagerDAO extends DAO<Manager> {
+
+    @Override
+    public boolean create(Manager obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Manager obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Manager obj) {
+        return false;
+    }
+
+    @Override
+    public Manager find(int id) {
+        try {
+            return getManagerByPersonId(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
    
     public Manager getManagerByPersonId(int personId) throws SQLException {

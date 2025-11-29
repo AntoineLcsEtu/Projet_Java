@@ -11,7 +11,32 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class CategoryDAO {
+public class CategoryDAO extends DAO<Category> {
+
+    @Override
+    public boolean create(Category obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Category obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Category obj) {
+        return false;
+    }
+
+    @Override
+    public Category find(int id) {
+        try {
+            return getCategoryById(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
     public Category getCategoryById(int categoryId) throws SQLException {
         String sql = """
             SELECT c.CategoryID, c.Type

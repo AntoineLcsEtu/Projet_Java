@@ -1,5 +1,6 @@
 package be.lucas.DAO;
 
+import be.lucas.Model.Person;
 import be.lucas.util.DBConnection;
 
 import java.sql.Connection;
@@ -7,7 +8,27 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class PersonDAO {
+public class PersonDAO extends DAO<Person> {
+
+    @Override
+    public boolean create(Person obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Person obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Person obj) {
+        return false;
+    }
+
+    @Override
+    public Person find(int id) {
+        return null;
+    }
 	
     public String login(int personId, String password) throws SQLException {
         String sql = """

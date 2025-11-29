@@ -19,7 +19,7 @@ public class ManagerAvailability extends JFrame {
     public ManagerAvailability(Manager manager) {
         this.manager = manager;
         setTitle("Disponibilités - " + manager.getFirstName() + " " + manager.getName());
-        setSize(950, 700);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -41,9 +41,9 @@ public class ManagerAvailability extends JFrame {
         textArea.setMargin(new Insets(10, 10, 10, 10));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("═══════════════════════════════════════════════════════════════════════\n");
+        sb.append("═══════════════════════════════════════════════════════════════════════════\n");
         sb.append("           DISPONIBILITÉS DES RIDES - ").append(categoryName.toUpperCase()).append("\n");
-        sb.append("═══════════════════════════════════════════════════════════════════════\n\n");
+        sb.append("═══════════════════════════════════════════════════════════════════════════\n\n");
 
         try {
             if (manager.getCategory() == null) {
@@ -51,7 +51,6 @@ public class ManagerAvailability extends JFrame {
             } else {
                 int categoryId = manager.getCategory().getId();
 
-                // Récupérer tous les rides (doivent être préchargés avec inscriptions et véhicules)
                 List<Ride> allRides = manager.getAllRides();
 
                 List<Ride> categoryRides = allRides.stream()

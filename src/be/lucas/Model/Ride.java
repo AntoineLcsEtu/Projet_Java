@@ -15,17 +15,8 @@ public class Ride {
     private double fee;
     private List<Inscription> inscriptions;
     private List<Vehicle> vehicles;
+    private Calendar calendar;  
 
-    private int categoryId;
-
-    public int getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(int categoryId) {
-        this.categoryId = categoryId;
-    }
-    
     public Ride(int id, String startPlace, Date startDate, double fee) {
         this.id = id;
         this.startPlace = startPlace;  
@@ -110,7 +101,6 @@ public class Ride {
         return new RideDAO().assignVehicleToRide(vehicle.getId(), this.id);
     }
     
-    
     public Date getStartDate() { return startDate; }
     public void setStartDate(Date startDate) { this.startDate = startDate; }
 
@@ -120,14 +110,35 @@ public class Ride {
     public List<Inscription> getRegistrations() { return inscriptions; }
     public List<Vehicle> getVehicles() { return vehicles; }
     
-    
-    private Category category;
-
-    public Category getCategory() {
-        return category;
+    public Calendar getCalendar() {
+        return calendar;
     }
 
-    public void setCategory(Category category) {
-        this.category = category;
+    public void setCalendar(Calendar calendar) {
+        this.calendar = calendar;
+    }
+    
+    public Category getCategory() {
+        return calendar != null ? calendar.getCategory() : null;
+    }
+    
+    public int getCategoryId() {
+        Category category = getCategory();
+        return category != null ? category.getId() : 0;
+    }
+    
+    public int getUsedBikeSpotsInVehicle(Vehicle vehicle) {
+        return (int) inscriptions.stream()
+            .filter(insc -> insc.isBike())
+            .filter(insc -> {
+                Member member = insc.getMember();
+                for (Vehicle v : vehicles) {
+                    if (v.equals(vehicle) && v.getPassengers().contains(member)) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            .count();
     }
 }

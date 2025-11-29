@@ -10,92 +10,178 @@ public class MemberPayMembership extends JFrame {
     private Member member;
     private JLabel balanceLabel;
     private JLabel feeLabel;
+    private JButton payButton;
+    private JTextField amountField;
+    private JButton creditButton;
 
     public MemberPayMembership(Member member) {
         this.member = member;
-        setTitle("Payer Cotisation - " + member.getFirstName() + " " + member.getName());
-        setSize(450, 250);
+        setTitle("Cotisation & Solde - " + member.getFirstName() + " " + member.getName());
+        setSize(750, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        initUI();
+        refreshInfo();
+    }
 
-        JLabel titleLabel = new JLabel("Payer votre cotisation annuelle", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel);
+    private void initUI() {
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        balanceLabel = new JLabel("", SwingConstants.CENTER);
-        balanceLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        panel.add(balanceLabel);
+        JLabel title = new JLabel("GESTION COTISATION & SOLDE", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 24));
+        title.setForeground(new Color(0, 102, 204));
+        mainPanel.add(title, BorderLayout.NORTH);
 
-        feeLabel = new JLabel("", SwingConstants.CENTER);
-        feeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        panel.add(feeLabel);
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setBackground(new Color(248, 249, 250));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 15, 15, 15);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JButton payButton = new JButton("Payer la cotisation");
-        payButton.setFont(new Font("Arial", Font.BOLD, 14));
-        payButton.setBackground(new Color(0, 128, 0));
-        payButton.setForeground(Color.WHITE);
-        panel.add(payButton);
+        balanceLabel = new JLabel();
+        balanceLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        balanceLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        centerPanel.add(balanceLabel, gbc);
 
+        feeLabel = new JLabel();
+        feeLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        feeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridy = 1;
+        centerPanel.add(feeLabel, gbc);
+
+        payButton = new JButton("Payer la cotisation");
+        payButton.setFont(new Font("Arial", Font.BOLD, 16));
+        payButton.setPreferredSize(new Dimension(320, 50));
+        gbc.gridy = 2;
+        centerPanel.add(payButton, gbc);
         payButton.addActionListener(e -> payMembership());
 
-        add(panel);
-        refreshInfo();
+        JSeparator sep = new JSeparator();
+        gbc.gridy = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(30, 50, 30, 50);
+        centerPanel.add(sep, gbc);
+
+        JLabel creditTitle = new JLabel("Recharger mon solde", SwingConstants.CENTER);
+        creditTitle.setFont(new Font("Arial", Font.BOLD, 18));
+        creditTitle.setForeground(new Color(0, 102, 204));
+        gbc.gridy = 4; gbc.insets = new Insets(10, 10, 10, 10);
+        centerPanel.add(creditTitle, gbc);
+
+        JLabel lblAmount = new JLabel("Montant (€) :");
+        lblAmount.setFont(new Font("Arial", Font.PLAIN, 16));
+        gbc.gridy = 5; gbc.gridwidth = 1; gbc.anchor = GridBagConstraints.EAST;
+        centerPanel.add(lblAmount, gbc);
+
+        amountField = new JTextField(12);
+        amountField.setFont(new Font("Arial", Font.PLAIN, 16));
+        amountField.setHorizontalAlignment(JTextField.RIGHT);
+        gbc.gridx = 1; gbc.anchor = GridBagConstraints.WEST;
+        centerPanel.add(amountField, gbc);
+
+        creditButton = new JButton("Créditer le solde");
+        creditButton.setFont(new Font("Arial", Font.BOLD, 16));
+        creditButton.setBackground(Color.WHITE);
+        creditButton.setForeground(new Color(0, 102, 204));
+        creditButton.setPreferredSize(new Dimension(320, 50));
+        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
+        centerPanel.add(creditButton, gbc);
+
+        creditButton.addActionListener(e -> creditBalanceFromUI());
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        add(mainPanel);
     }
 
     private void refreshInfo() {
         balanceLabel.setText("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
 
         try {
-            int categoryCount = member.getCategoryCount();
-            double totalFee = member.calculateMembershipFee();
+            int catCount = member.getCategoryCount();
+            double fee = member.calculateMembershipFee();
 
             feeLabel.setText(
-                "<html><center>" +
-                    "Cotisation : 20 € + " + categoryCount + " catégorie(s) × 5 €<br>" +
-                    "<b style='font-size:16px; color:#006400;'>Total à payer : " + 
-                    String.format("%.2f", totalFee) + " €</b>" +
-                "</center></html>"
-            );
-        } catch (Exception e) {
+            	    "<html><center>Cotisation : 20 € + " + catCount + " catégorie(s) × 5 €<br>" +
+            	    "<b style='font-size:18px; color:#0066CC;'>Total : " + String.format("%.2f", fee) + " €</b></center></html>"
+            	);
+
+            if (member.isMembershipPaid()) {
+                payButton.setEnabled(false);
+                payButton.setText("Cotisation déjà payée ");
+                payButton.setBackground(new Color(200, 200,200));
+            } else {
+                payButton.setEnabled(true);
+                payButton.setText("Payer la cotisation");
+                payButton.setBackground(Color.WHITE);
+            }
+        } catch (Exception ex) {
             feeLabel.setText("<html><center><span style='color:red;'>Erreur de calcul</span></center></html>");
-            e.printStackTrace();
+            payButton.setEnabled(false);
         }
     }
 
     private void payMembership() {
         try {
-            double totalFee = member.calculateMembershipFee();
-
             if (!member.canPayMembership()) {
                 JOptionPane.showMessageDialog(this,
-                    "<html><center><b>Solde insuffisant !</b><br>" +
-                    "Montant requis : <b>" + String.format("%.2f", totalFee) + " €</b><br>" +
-                    "Votre solde : <b>" + String.format("%.2f", member.getBalance()) + " €</b></center></html>",
+                    "<html><b>Solde insuffisant !</b><br>" +
+                    "Requis : " + String.format("%.2f", member.calculateMembershipFee()) + " €<br>" +
+                    "Disponible : " + String.format("%.2f", member.getBalance()) + " €</html>",
                     "Paiement impossible", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            boolean success = member.payMembership();
-
-            if (success) {
+            boolean ok = member.payMembership();
+            if (ok) {
                 refreshInfo();
                 JOptionPane.showMessageDialog(this,
-                    "<html><center>Cotisation payée avec succès !<br>" +
-                    "Montant débité : <b>" + String.format("%.2f", totalFee) + " €</b><br>" +
-                    "Nouveau solde : <b>" + String.format("%.2f", member.getBalance()) + " €</b></center></html>",
+                    "Cotisation payée avec succès !\nNouveau solde : " + String.format("%.2f", member.getBalance()) + " €",
                     "Succès", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this, "Échec du paiement.", "Erreur", JOptionPane.ERROR_MESSAGE);
             }
-
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                "Erreur lors du paiement : " + ex.getMessage(),
-                "Erreur", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void creditBalanceFromUI() {
+        String text = amountField.getText().trim();
+        if (text.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Veuillez saisir un montant.", "Champ vide", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        double amount;
+        try {
+            amount = Double.parseDouble(text.replace(',', '.'));
+            if (amount <= 0) throw new NumberFormatException();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Montant invalide.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "<html>Créditer <b>" + String.format("%.2f", amount) + " €</b> sur le solde de<br>" +
+            member.getFirstName() + " " + member.getName() + " ?</html>",
+            "Confirmation", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = member.creditBalance(amount); 
+                if (success) {
+                    refreshInfo();
+                    amountField.setText("");
+                    JOptionPane.showMessageDialog(this,
+                        "Crédit de " + String.format("%.2f", amount) + " € effectué !\nNouveau solde : " +
+                        String.format("%.2f", member.getBalance()) + " €",
+                        "Succès", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Le crédit a été refusé (solde négatif interdit).", "Info", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }

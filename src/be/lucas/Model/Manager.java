@@ -15,7 +15,9 @@ public class Manager extends Person {
 
     public void publishCalendar(Ride ride) {
         if (category != null && category.getCalendar() != null) {
-            category.getCalendar().addRide(ride);
+            Calendar calendar = category.getCalendar();
+            calendar.addRide(ride);
+            ride.setCalendar(calendar);  
         }
     }
 
@@ -34,7 +36,6 @@ public class Manager extends Person {
         RideDAO dao = new RideDAO();
         return dao.getAllRides();
     }
-    
     
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }

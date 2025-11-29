@@ -20,14 +20,16 @@ public class MemberOfferVehicle extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        JLabel title = new JLabel("Rides où vous êtes inscrit (sans être conducteur)", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 16));
+        JLabel title = new JLabel("RIDES OÙ VOUS ÊTES INSCRIT (SANS ÊTRE CONDUCTEUR)", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
         JPanel ridesPanel = new JPanel();
         ridesPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        ridesPanel.setBackground(new Color(248, 249, 250));
 
         try {
             List<Ride> eligibleRides = member.getEligibleRidesForVehicleOffer();

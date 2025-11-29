@@ -5,7 +5,27 @@ import be.lucas.util.DBConnection;
 
 import java.sql.*;
 
-public class VehicleDAO {
+public class VehicleDAO extends DAO<Vehicle> {
+
+    @Override
+    public boolean create(Vehicle obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Vehicle obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Vehicle obj) {
+        return false;
+    }
+
+    @Override
+    public Vehicle find(int id) {
+        return null;
+    }
 
     public boolean insertVehicle(Vehicle vehicle, int personId) throws SQLException {
         String sql = """

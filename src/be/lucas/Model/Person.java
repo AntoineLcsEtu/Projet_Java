@@ -20,10 +20,6 @@ public abstract class Person {
         this.password = password;
     }
 
-    public boolean login(int id, String password) {
-        return this.id == id && this.password.equals(password);
-    }
-
     public static Person authenticate(int id, String password) throws Exception {
         PersonDAO personDAO = new PersonDAO();
         String role = personDAO.login(id, password);

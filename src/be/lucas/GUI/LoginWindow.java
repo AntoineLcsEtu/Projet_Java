@@ -17,26 +17,36 @@ public class LoginWindow extends JFrame {
 
     public LoginWindow() {
         setTitle("Connexion - Club Vélo");
-        setSize(300, 200);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        panel.add(new JLabel("ID :"));
+        JLabel title = new JLabel("CONNEXION AU CLUB VÉLO", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setForeground(new Color(0, 102, 204));
+        mainPanel.add(title, BorderLayout.NORTH);
+
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        formPanel.setBackground(new Color(248, 249, 250));
+
+        formPanel.add(new JLabel("ID :"));
         idField = new JTextField();
-        panel.add(idField);
+        formPanel.add(idField);
 
-        panel.add(new JLabel("Mot de passe :"));
+        formPanel.add(new JLabel("Mot de passe :"));
         passwordField = new JPasswordField();
-        panel.add(passwordField);
+        formPanel.add(passwordField);
 
         loginButton = new JButton("Se connecter");
-        panel.add(new JLabel());
-        panel.add(loginButton);
+        formPanel.add(new JLabel());
+        formPanel.add(loginButton);
 
-        add(panel);
+        mainPanel.add(formPanel, BorderLayout.CENTER);
+        add(mainPanel);
 
         loginButton.addActionListener(e -> handleLogin());
     }

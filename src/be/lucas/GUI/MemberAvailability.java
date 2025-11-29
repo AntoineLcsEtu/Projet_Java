@@ -16,10 +16,19 @@ public class MemberAvailability extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JLabel title = new JLabel("MES RÉSERVATIONS", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setForeground(new Color(0, 102, 204));
+        mainPanel.add(title, BorderLayout.NORTH);
+
         JTextArea textArea = new JTextArea();
         textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+        textArea.setBackground(new Color(248, 249, 250));
+        textArea.setMargin(new Insets(10, 10, 10, 10));
 
         try {
             List<Ride> reservedRides = member.getReservedRides();
@@ -49,7 +58,7 @@ public class MemberAvailability extends JFrame {
             e.printStackTrace();
         }
 
-        panel.add(new JScrollPane(textArea), BorderLayout.CENTER);
-        add(panel);
+        mainPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+        add(mainPanel);
     }
 }

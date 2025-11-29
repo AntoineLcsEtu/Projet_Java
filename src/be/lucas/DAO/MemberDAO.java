@@ -12,7 +12,32 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MemberDAO extends PersonDAO {
+public class MemberDAO extends DAO<Member> {
+
+    @Override
+    public boolean create(Member obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Member obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Member obj) {
+        return false;
+    }
+
+    @Override
+    public Member find(int id) {
+        try {
+            return getMemberByPersonId(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public Member getMemberByPersonId(int personId) throws SQLException {
         String sql = """
@@ -160,7 +185,24 @@ public class MemberDAO extends PersonDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, amount);
             ps.setInt(2, personId);
-            return ps.executeUpdate() > 0;
+            int rowsAffected = ps.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                String checkSql = "SELECT Balance FROM Member WHERE PersonID = ?";
+                try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+                    checkPs.setInt(1, personId);
+                    ResultSet rs = checkPs.executeQuery();
+                    if (rs.next() && rs.getDouble("Balance") < 0) {
+                        String refundSql = "UPDATE Member SET Balance = 0 WHERE PersonID = ?";
+                        try (PreparedStatement refundPs = conn.prepareStatement(refundSql)) {
+                            refundPs.setInt(1, personId);
+                            refundPs.executeUpdate();
+                        }
+                        return false;
+                    }
+                }
+            }
+            return rowsAffected > 0;
         }
     }
 }

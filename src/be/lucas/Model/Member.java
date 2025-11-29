@@ -56,6 +56,7 @@ public class Member extends Person {
         InscriptionDAO dao = new InscriptionDAO();
         return dao.getRidesByMemberId(this.getId());
     }
+    
     public List<Ride> getEligibleRidesForVehicleOffer() throws Exception {
         RideDAO dao = new RideDAO();
         return dao.getRidesForVehicleOffer(this.getId());
@@ -80,9 +81,6 @@ public class Member extends Person {
     }
 
 
-    
-
-
     public boolean canPayMembership() throws Exception {
         double totalFee = calculateMembershipFee();
         return getBalance() >= totalFee;
@@ -95,13 +93,15 @@ public class Member extends Person {
         double newBalance = getBalance() - totalFee;
 
         MemberDAO dao = new MemberDAO();
-        boolean success = dao.updateMembershipPaid(getId(), newBalance, true);
+        boolean success = dao.updateMembershipPaid(getId(), newBalance, true); 
         if (success) {
             setBalance(newBalance);
             setMembershipPaid(true);
         }
         return success;
     }
+    
+    
     public double calculateMembershipFee() throws Exception {
         int categoryCount = getCategoryCount(); 
         return 20.0 + categoryCount * 5.0;
@@ -126,6 +126,20 @@ public class Member extends Person {
 
     public boolean offerVehicleForRide(Ride ride) throws Exception {
         return ride.assignMemberVehicle(this);
+    }
+    
+    public boolean creditBalance(double amount) throws Exception {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être positif");
+        }
+
+        MemberDAO dao = new MemberDAO();
+        boolean success = dao.creditBalance(this.getId(), amount);
+
+        if (success) {
+            this.balance += amount;  
+        }
+        return success;
     }
     
     public double getBalance() { return balance; }

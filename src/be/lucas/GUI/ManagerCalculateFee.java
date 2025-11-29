@@ -1,6 +1,5 @@
 package be.lucas.GUI;
 
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -21,18 +20,27 @@ public class ManagerCalculateFee extends JFrame {
     public ManagerCalculateFee(Manager manager) {
         this.manager = manager;
         setTitle("Calculate Ride Fee - " + manager.getFirstName() + " " + manager.getName());
-        setSize(300, 200);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(2, 2));
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        panel.add(new JLabel("Ride ID:"));
+        JLabel title = new JLabel("CALCULER LE PRIX D'UN TRAJET", SwingConstants.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        title.setForeground(new Color(0, 102, 204));
+        mainPanel.add(title, BorderLayout.NORTH);
+
+        JPanel formPanel = new JPanel(new GridLayout(2, 2));
+        formPanel.setBackground(new Color(248, 249, 250));
+
+        formPanel.add(new JLabel("Ride ID:"));
         JTextField rideIdField = new JTextField();
-        panel.add(rideIdField);
+        formPanel.add(rideIdField);
 
         JButton calculateButton = new JButton("Calculate Fee");
-        panel.add(calculateButton);
+        formPanel.add(calculateButton);
 
         calculateButton.addActionListener(e -> {
             try {
@@ -48,6 +56,7 @@ public class ManagerCalculateFee extends JFrame {
             }
         });
 
-        add(panel);
+        mainPanel.add(formPanel, BorderLayout.CENTER);
+        add(mainPanel);
     }
 }

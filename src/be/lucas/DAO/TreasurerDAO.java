@@ -9,7 +9,32 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class TreasurerDAO extends PersonDAO {
+public class TreasurerDAO extends DAO<Treasurer> {
+
+    @Override
+    public boolean create(Treasurer obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Treasurer obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Treasurer obj) {
+        return false;
+    }
+
+    @Override
+    public Treasurer find(int id) {
+        try {
+            return getTreasurerByPersonId(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 	
     public Treasurer getTreasurerByPersonId(int personId) throws SQLException {

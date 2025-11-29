@@ -7,7 +7,32 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RideDAO {
+public class RideDAO extends DAO<Ride> {
+
+    @Override
+    public boolean create(Ride obj) {
+        return false;
+    }
+
+    @Override
+    public boolean delete(Ride obj) {
+        return false;
+    }
+
+    @Override
+    public boolean update(Ride obj) {
+        return false;
+    }
+
+    @Override
+    public Ride find(int id) {
+        try {
+            return getRideWithDetails(id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public List<Ride> getAllRides() throws SQLException {
         List<Ride> rides = new ArrayList<>();
@@ -37,7 +62,21 @@ public class RideDAO {
                         rs.getTimestamp("StartDate"),
                         rs.getDouble("Fee")
                     );
-                    currentRide.setCategoryId(rs.getInt("CategoryID"));
+                    
+                    int categoryId = rs.getInt("CategoryID");
+                    if (!rs.wasNull()) {
+                        CategoryDAO categoryDAO = new CategoryDAO();
+                        Category category = categoryDAO.getCategoryById(categoryId);
+                        if (category != null) {
+                            if (category.getCalendar() == null) {
+                                category.setCalendar(new Calendar(categoryId, category));
+                            }
+                            currentRide.setCalendar(category.getCalendar());
+                        }
+                    }
+                    
+                    loadInscriptionsForRide(currentRide);
+                    
                     rides.add(currentRide);
                     currentRideId = rideId;
                 }
@@ -49,6 +88,14 @@ public class RideDAO {
                         rs.getInt("SeatNumber"),
                         rs.getInt("BikeSpotNumber")
                     );
+                    
+                    int driverId = rs.getInt("DriverID");
+                    if (!rs.wasNull()) {
+                        MemberDAO memberDAO = new MemberDAO();
+                        Member driver = memberDAO.getMemberByPersonId(driverId);
+                        vehicle.setDriver(driver);
+                    }
+                    
                     currentRide.addVehicle(vehicle);
                 }
             }
@@ -81,6 +128,18 @@ public class RideDAO {
                         rs.getTimestamp("StartDate"),
                         rs.getDouble("Fee")
                     );
+                    
+                    // Charger et établir la liaison avec Calendar/Category
+                    int categoryId = rs.getInt("CategoryID");
+                    if (!rs.wasNull()) {
+                        CategoryDAO categoryDAO = new CategoryDAO();
+                        Category category = categoryDAO.getCategoryById(categoryId);
+                        if (category != null && category.getCalendar() != null) {
+                            ride.setCalendar(category.getCalendar());
+                        }
+                    }
+                    
+                    loadInscriptionsForRide(ride);
                 }
 
                 int vehicleId = rs.getInt("VehicleID");
@@ -90,6 +149,14 @@ public class RideDAO {
                         rs.getInt("SeatNumber"),
                         rs.getInt("BikeSpotNumber")
                     );
+                    
+                    int driverId = rs.getInt("DriverID");
+                    if (!rs.wasNull()) {
+                        MemberDAO memberDAO = new MemberDAO();
+                        Member driver = memberDAO.getMemberByPersonId(driverId);
+                        vehicle.setDriver(driver);
+                    }
+                    
                     ride.addVehicle(vehicle);
                 }
             }
@@ -97,10 +164,49 @@ public class RideDAO {
         return ride;
     }
     
+    private void loadInscriptionsForRide(Ride ride) throws SQLException {
+        String sql = """
+            SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike,
+                   m.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+            FROM Inscription i
+            JOIN Member m ON i.MemberID = m.MemberID
+            JOIN Person p ON m.PersonID = p.PersonID
+            WHERE i.RideID = ?
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ride.getId());
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Member member = new Member(
+                    rs.getString("Name"),
+                    rs.getString("FirstName"),
+                    rs.getString("Phone"),
+                    rs.getInt("PersonID"),
+                    rs.getString("Password"),
+                    rs.getDouble("Balance")
+                );
+
+                Inscription inscription = new Inscription(
+                    member,
+                    ride.getId(),
+                    rs.getBoolean("IsPassenger"),
+                    rs.getBoolean("IsBike")
+                );
+                inscription.setId(rs.getInt("InscriptionID"));
+
+                ride.addRegistration(inscription);
+            }
+        }
+    }
+    
     public List<Ride> getAvailableRidesForMember(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
-            SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee
+            SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CategoryID
             FROM Ride r
             WHERE r.RideID NOT IN (
                 SELECT i.RideID FROM Inscription i
@@ -123,16 +229,62 @@ public class RideDAO {
                     rs.getTimestamp("StartDate"),
                     rs.getDouble("Fee")
                 );
+                
+                int categoryId = rs.getInt("CategoryID");
+                if (!rs.wasNull()) {
+                    CategoryDAO categoryDAO = new CategoryDAO();
+                    Category category = categoryDAO.getCategoryById(categoryId);
+                    if (category != null && category.getCalendar() != null) {
+                        ride.setCalendar(category.getCalendar());
+                    }
+                }
+                
+                loadVehiclesForRide(ride);
+                loadInscriptionsForRide(ride);
+                
                 rides.add(ride);
             }
         }
         return rides;
     }
     
+    private void loadVehiclesForRide(Ride ride) throws SQLException {
+        String sql = """
+            SELECT v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
+            FROM Ride_Vehicle rv
+            JOIN Vehicle v ON rv.VehicleID = v.VehicleID
+            WHERE rv.RideID = ?
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, ride.getId());
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Vehicle vehicle = new Vehicle(
+                    rs.getInt("VehicleID"),
+                    rs.getInt("SeatNumber"),
+                    rs.getInt("BikeSpotNumber")
+                );
+                
+                int driverId = rs.getInt("DriverID");
+                if (!rs.wasNull()) {
+                    MemberDAO memberDAO = new MemberDAO();
+                    Member driver = memberDAO.getMemberByPersonId(driverId);
+                    vehicle.setDriver(driver);
+                }
+                
+                ride.addVehicle(vehicle);
+            }
+        }
+    }
+    
     public List<Ride> getRidesForVehicleOffer(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
-            SELECT DISTINCT r.RideID, r.StartPlace, r.StartDate, r.Fee
+            SELECT DISTINCT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CategoryID
             FROM Ride r
             JOIN Inscription i ON r.RideID = i.RideID
             JOIN Member m ON i.MemberID = m.MemberID
@@ -161,6 +313,19 @@ public class RideDAO {
                     rs.getTimestamp("StartDate"),
                     rs.getDouble("Fee")
                 );
+                
+                int categoryId = rs.getInt("CategoryID");
+                if (!rs.wasNull()) {
+                    CategoryDAO categoryDAO = new CategoryDAO();
+                    Category category = categoryDAO.getCategoryById(categoryId);
+                    if (category != null && category.getCalendar() != null) {
+                        ride.setCalendar(category.getCalendar());
+                    }
+                }
+                
+                loadVehiclesForRide(ride);
+                loadInscriptionsForRide(ride);
+                
                 rides.add(ride);
             }
         }
@@ -224,29 +389,7 @@ public class RideDAO {
         return drivers;
     }
     
-    public int insertRide(Ride ride) throws SQLException {
-        String sql = """
-            INSERT INTO Ride (StartPlace, StartDate, Fee, CategoryID)
-            VALUES (?, ?, ?, ?)
-            """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
-
-            ps.setString(1, ride.getStartPlace());
-            ps.setTimestamp(2, new java.sql.Timestamp(ride.getStartDate().getTime()));
-            ps.setDouble(3, ride.getFee());
-            ps.setInt(4, ride.getCategoryId());
-
-            if (ps.executeUpdate() > 0) {
-                ResultSet rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        }
-        return -1;
-    }
+    
     
     public int insertRideManualId(Ride ride, int categoryId) throws SQLException {
         String maxSql = "SELECT COALESCE(MAX(RideID), 0) AS MaxID FROM Ride";

@@ -1,18 +1,42 @@
 package be.lucas.Model;
 
+import java.util.ArrayList;
 import java.util.List;
-
 import be.lucas.DAO.MemberDAO;
 import be.lucas.DAO.RideDAO;
 
 public class Treasurer extends Person {
+	
     public Treasurer(String name, String firstName, String phone, int id, String password) {
         super(name, firstName, phone, id, password);
     }
 
-    public void sendReminderLetter() 
-    {
-    	
+    public String sendReminderLetters() throws Exception {
+        MemberDAO memberDAO = new MemberDAO();
+        List<Member> members = memberDAO.getAllMembersWithCategories();
+
+        List<String> unpaidMembers = new ArrayList<>();
+
+        for (Member m : members) {
+            if (!m.isMembershipPaid()) {  
+                unpaidMembers.add(m.getFirstName() + " " + m.getName());
+            }
+        }
+
+        if (unpaidMembers.isEmpty()) {
+            return "Tous les membres sont à jour !\nAucun rappel à envoyer.";
+        }
+
+        String names = String.join(", ", unpaidMembers);
+        int count = unpaidMembers.size();
+        String memberWord = count == 1 ? "membre" : "membres";
+
+        return "Rappel envoyé à :\n" + names + "\n\n(" + count + " " + memberWord + " non à jour)";
+    }
+
+    public List<Member> getDriversToPay() throws Exception {
+        RideDAO rideDAO = new RideDAO();
+        return rideDAO.getDriversFromCompletedRides();
     }
 
     public Object[] payDriver() throws Exception {
@@ -54,12 +78,8 @@ public class Treasurer extends Person {
         return new Object[]{ log.toString(), totalPaid };
     }
 
+    public void claimFee() {}
 
-    public void claimFee() {
-        
-    }
-
-    
     public Object[] verifyMembershipFees() throws Exception {
         MemberDAO memberDAO = new MemberDAO();
         List<Member> members = memberDAO.getAllMembersWithCategories();
@@ -79,23 +99,20 @@ public class Treasurer extends Person {
         for (int i = 0; i < members.size(); i++) {
             Member m = members.get(i);
 
-            double requiredFee = 20.0 + (m.getCategories().size() * 5.0);
-            boolean isPaid = m.getBalance() >= requiredFee;
-            m.setMembershipPaid(isPaid);               // mise à jour du modèle
+            boolean isPaid = m.isMembershipPaid();
 
-            if (isPaid) paidCount++; else unpaidCount++;
+            if (isPaid) paidCount++;
+            else unpaidCount++;
 
             sb.append(String.format("%3d. %s %s\n", i + 1, m.getFirstName(), m.getName()));
-            sb.append(String.format("     Solde : %.2f €\n", m.getBalance()));
-            sb.append(String.format("     Catégories : %d\n", m.getCategories().size()));
-            sb.append(String.format("     Cotisation : %s\n", isPaid ? "PAYÉE" : "NON PAYÉE"));
+            sb.append(String.format("     Solde actuel   : %.2f €\n", m.getBalance()));
+            sb.append(String.format("     Statut         : %s\n",
+                    isPaid ? "PAYÉE " : "NON PAYÉE"));
             sb.append("     " + "-".repeat(60) + "\n");
         }
 
-        sb.append(String.format("\nRÉSUMÉ : %d payé(s) | %d non payé(s)\n", paidCount, unpaidCount));
+        sb.append(String.format("\nRÉSUMÉ : %d membre(s) à jour | %d membre(s) non à jour\n", paidCount, unpaidCount));
 
         return new Object[]{ sb.toString(), paidCount, unpaidCount };
     }
-    
-    
 }
