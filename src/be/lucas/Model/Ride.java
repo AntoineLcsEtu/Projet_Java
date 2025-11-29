@@ -29,7 +29,7 @@ public class Ride {
     public void addRegistration(Inscription inscription) {
         boolean exists = inscriptions.stream()
             .anyMatch(i -> i.getMember().getId() == inscription.getMember().getId()
-                        && i.getRideId() == inscription.getRideId());
+                        && i.getRideId() == inscription.getRideId());  
         if (!exists) {
             inscriptions.add(inscription);
         }

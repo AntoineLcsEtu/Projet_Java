@@ -131,7 +131,7 @@ public class InscriptionDAO extends DAO<Inscription> {
 
                 Inscription inscription = new Inscription(
                     member,
-                    ride.getId(),
+                    ride,  
                     rs.getBoolean("IsPassenger"),
                     rs.getBoolean("IsBike")
                 );

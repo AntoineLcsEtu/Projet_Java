@@ -27,14 +27,19 @@ public class Manager extends Person {
     }
     
     public void calculateRideFee(Ride ride) {
-        int totalSeats = ride.getVehicles().stream().mapToInt(Vehicle::getSeatNumber).sum();
-        int totalBikeSpots = ride.getVehicles().stream().mapToInt(Vehicle::getBikeSpotNumber).sum();
-        ride.setFee(totalSeats * 10.0 + totalBikeSpots * 5.0);
+        int numPassengers = ride.getNeededSeatNumber();
+        int numBikes = ride.getNeededBikeSpotNumber();
+        ride.setFee(numPassengers * 5.0 + numBikes * 2.5);
     }
     
     public List<Ride> getAllRides() throws Exception {
         RideDAO dao = new RideDAO();
         return dao.getAllRides();
+    }
+    
+    public Ride getRideById(int rideId) throws Exception {
+        RideDAO dao = new RideDAO();
+        return dao.find(rideId); 
     }
     
     public Category getCategory() { return category; }

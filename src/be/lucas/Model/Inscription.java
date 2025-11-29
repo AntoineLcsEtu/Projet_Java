@@ -1,15 +1,15 @@
 package be.lucas.Model;
 
 public class Inscription {
-	private int id;                    
+    private int id;                    
     private Member member;            
-    private int rideId;                
+    private Ride ride;  
     private boolean isPassenger;
     private boolean isBike;
 
-    public Inscription(Member member, int rideId, boolean isPassenger, boolean isBike) {
+    public Inscription(Member member, Ride ride, boolean isPassenger, boolean isBike) {
         this.member = member;
-        this.rideId = rideId;
+        this.ride = ride;
         this.isPassenger = isPassenger;
         this.isBike = isBike;
     }
@@ -20,8 +20,12 @@ public class Inscription {
     public Member getMember() { return member; }
     public void setMember(Member member) { this.member = member; }
 
-    public int getRideId() { return rideId; }
-    public void setRideId(int rideId) { this.rideId = rideId; }
+    public Ride getRide() { return ride; }
+    public void setRide(Ride ride) { this.ride = ride; }
+    
+    public int getRideId() { 
+        return ride != null ? ride.getId() : 0; 
+    }
 
     public boolean isPassenger() { return isPassenger; }
     public void setPassenger(boolean passenger) { this.isPassenger = passenger; }

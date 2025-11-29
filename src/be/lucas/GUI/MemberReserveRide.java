@@ -5,6 +5,7 @@ import be.lucas.Model.Ride;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Date;
 import java.util.List;
 
 public class MemberReserveRide extends JFrame {
@@ -39,7 +40,9 @@ public class MemberReserveRide extends JFrame {
 
         try {
             List<Ride> availableRides = member.getAvailableRides();
-
+            
+            availableRides.removeIf(ride -> !ride.getStartDate().after(new Date()));
+            
             if (availableRides.isEmpty()) {
                 JLabel noRides = new JLabel("Aucun ride disponible pour le moment.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
@@ -64,10 +67,17 @@ public class MemberReserveRide extends JFrame {
     private JButton createRideButton(Ride ride) {
         JButton button = new JButton();
         button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(650, 80));
+        button.setPreferredSize(new Dimension(650, 100));
 
-        JPanel infoPanel = new JPanel(new GridLayout(3, 1));
+        JPanel infoPanel = new JPanel(new GridLayout(4, 1));
         infoPanel.add(new JLabel("<html><b>Ride ID: " + ride.getId() + "</b></html>"));
+        
+        String categoryName = "Non spécifiée";
+        if (ride.getCategory() != null && ride.getCategory().getType() != null) {
+            categoryName = ride.getCategory().getType().name().replace("_", " ");
+        }
+        infoPanel.add(new JLabel("Catégorie: " + categoryName));
+        
         infoPanel.add(new JLabel("Lieu: " + ride.getStartPlace()));
         infoPanel.add(new JLabel("Date: " + ride.getStartDate()));
 

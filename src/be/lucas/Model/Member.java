@@ -10,12 +10,14 @@ import be.lucas.DAO.RideDAO;
 import be.lucas.DAO.VehicleDAO;
 
 public class Member extends Person {
-    private double balance;
+    
+	private double balance;
     private List<Bike> bikes;
     private Vehicle drivenVehicle;
     private List<Vehicle> passengerVehicles;
     private boolean isMembershipPaid;
     private List<Category> categories;
+    private List<Inscription> inscriptions;
 
     public Member(String name, String firstName, String phone, int id, String password, double balance) {
         super(name, firstName, phone, id, password);
@@ -24,6 +26,7 @@ public class Member extends Person {
         this.passengerVehicles = new ArrayList<>();
         this.categories = new ArrayList<>();
         this.isMembershipPaid = false;
+        this.inscriptions = new ArrayList<>();
     }
 
     public void calculateBalance() {
@@ -153,4 +156,16 @@ public class Member extends Person {
     public boolean isMembershipPaid() { return isMembershipPaid; }
     public void setMembershipPaid(boolean isMembershipPaid) { this.isMembershipPaid = isMembershipPaid; }
     public List<Category> getCategories() { return categories; }
+    public List<Inscription> getInscriptions() {
+		return inscriptions;
+	}
+
+	public void setInscriptions(List<Inscription> inscriptions) {
+		this.inscriptions = inscriptions;
+	}
+	public void addInscritions(Inscription i)
+	{
+		inscriptions.add(i);
+	}
+	
 }

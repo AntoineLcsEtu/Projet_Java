@@ -129,12 +129,14 @@ public class RideDAO extends DAO<Ride> {
                         rs.getDouble("Fee")
                     );
                     
-                    // Charger et établir la liaison avec Calendar/Category
                     int categoryId = rs.getInt("CategoryID");
                     if (!rs.wasNull()) {
                         CategoryDAO categoryDAO = new CategoryDAO();
                         Category category = categoryDAO.getCategoryById(categoryId);
-                        if (category != null && category.getCalendar() != null) {
+                        if (category != null) {
+                            if (category.getCalendar() == null) {
+                                category.setCalendar(new Calendar(categoryId, category));
+                            }
                             ride.setCalendar(category.getCalendar());
                         }
                     }
@@ -192,7 +194,7 @@ public class RideDAO extends DAO<Ride> {
 
                 Inscription inscription = new Inscription(
                     member,
-                    ride.getId(),
+                    ride, 
                     rs.getBoolean("IsPassenger"),
                     rs.getBoolean("IsBike")
                 );
@@ -234,7 +236,10 @@ public class RideDAO extends DAO<Ride> {
                 if (!rs.wasNull()) {
                     CategoryDAO categoryDAO = new CategoryDAO();
                     Category category = categoryDAO.getCategoryById(categoryId);
-                    if (category != null && category.getCalendar() != null) {
+                    if (category != null) {
+                        if (category.getCalendar() == null) {
+                            category.setCalendar(new Calendar(categoryId, category));
+                        }
                         ride.setCalendar(category.getCalendar());
                     }
                 }
@@ -318,7 +323,10 @@ public class RideDAO extends DAO<Ride> {
                 if (!rs.wasNull()) {
                     CategoryDAO categoryDAO = new CategoryDAO();
                     Category category = categoryDAO.getCategoryById(categoryId);
-                    if (category != null && category.getCalendar() != null) {
+                    if (category != null) {
+                        if (category.getCalendar() == null) {
+                            category.setCalendar(new Calendar(categoryId, category));
+                        }
                         ride.setCalendar(category.getCalendar());
                     }
                 }
