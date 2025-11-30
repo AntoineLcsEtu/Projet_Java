@@ -241,7 +241,7 @@ public class InscriptionDAO extends DAO<Inscription> {
 
         double newBalance = member.getBalance() - rideFee;
         MemberDAO memberDAO = new MemberDAO();
-        boolean balanceUpdated = memberDAO.creditBalance(member.getId(), -rideFee); // Montant négatif pour déduire
+        boolean balanceUpdated = memberDAO.creditBalance(member.getId(), -rideFee); 
         
         if (!balanceUpdated) {
             throw new Exception("Erreur lors de la mise à jour du solde.");

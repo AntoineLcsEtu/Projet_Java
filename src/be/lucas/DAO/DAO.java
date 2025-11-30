@@ -21,7 +21,7 @@ public abstract class DAO<T> {
         return DBConnection.getConnection();
     }
 
-    
+     
     public abstract boolean create(T obj);
 
     
