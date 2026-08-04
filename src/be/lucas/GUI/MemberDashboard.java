@@ -13,6 +13,13 @@ public class MemberDashboard extends JFrame {
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
         setLocationRelativeTo(null);
 
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                LogoutHandler.logout(MemberDashboard.this);
+            }
+        });
+
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
