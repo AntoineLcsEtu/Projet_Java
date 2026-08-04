@@ -11,27 +11,17 @@ public class Treasurer extends Person {
         super(name, firstName, phone, id, password);
     }
 
-    public String sendReminderLetters() throws Exception {
+    public List<Member> getUnpaidMembers() throws Exception {
         MemberDAO memberDAO = new MemberDAO();
         List<Member> members = memberDAO.getAllMembersWithCategories();
 
-        List<String> unpaidMembers = new ArrayList<>();
-
+        List<Member> unpaidMembers = new ArrayList<>();
         for (Member m : members) {
-            if (!m.isMembershipPaid()) {  
-                unpaidMembers.add(m.getFirstName() + " " + m.getName());
+            if (!m.isMembershipPaid()) {
+                unpaidMembers.add(m);
             }
         }
-
-        if (unpaidMembers.isEmpty()) {
-            return "Tous les membres sont à jour !\nAucun rappel à envoyer.";
-        }
-
-        String names = String.join(", ", unpaidMembers);
-        int count = unpaidMembers.size();
-        String memberWord = count == 1 ? "membre" : "membres";
-
-        return "Rappel envoyé à :\n" + names + "\n\n(" + count + " " + memberWord + " non à jour)";
+        return unpaidMembers;
     }
 
     public List<Member> getDriversToPay() throws Exception {
