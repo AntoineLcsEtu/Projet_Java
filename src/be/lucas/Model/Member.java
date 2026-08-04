@@ -124,12 +124,27 @@ public class Member extends Person {
         if (amount <= 0) {
             throw new IllegalArgumentException("Le montant doit être positif");
         }
+        return applyBalanceChange(amount);
+    }
+    
+    public boolean debitBalance(double amount) throws Exception {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être positif");
+        }
+        return applyBalanceChange(-amount);
+    }
+
+    private boolean applyBalanceChange(double amount) throws Exception {
+        double newBalance = this.balance + amount;
+        if (newBalance < 0) {
+            amount = -this.balance;
+            newBalance = 0;
+        }
 
         MemberDAO dao = new MemberDAO();
         boolean success = dao.creditBalance(this.getId(), amount);
-
         if (success) {
-            this.balance += amount;  
+            this.balance = newBalance;
         }
         return success;
     }

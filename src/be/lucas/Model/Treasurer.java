@@ -41,7 +41,6 @@ public class Treasurer extends Person {
 
     public Object[] payDriver() throws Exception {
         RideDAO rideDAO = new RideDAO();
-        MemberDAO memberDAO = new MemberDAO();
 
         List<Member> drivers = rideDAO.getDriversFromCompletedRides();
         StringBuilder log = new StringBuilder();
@@ -57,7 +56,7 @@ public class Treasurer extends Person {
         for (Member driver : drivers) {
         	double fee = driver.getDrivenVehicle().calculateDriverFee();
         	
-            boolean success = memberDAO.creditBalance(driver.getId(), fee);
+        	boolean success = driver.creditBalance(fee);
             if (success) {
                 log.append(String.format("✓ %s %s : +%.2f € (sièges: %d, vélo: %d)\n",
                         driver.getFirstName(), driver.getName(), fee,

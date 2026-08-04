@@ -187,12 +187,10 @@ public class InscriptionDAO extends DAO<Inscription> {
             ps.executeUpdate();
         }
 
-        MemberDAO memberDAO = new MemberDAO();
-        boolean balanceUpdated = memberDAO.creditBalance(member.getId(), -fee);
+        boolean balanceUpdated = member.debitBalance(fee);
         if (!balanceUpdated) {
             throw new Exception("Erreur lors de la mise à jour du solde.");
         }
-        member.setBalance(member.getBalance() - fee);
 
         String sql = """
             INSERT INTO Inscription (InscriptionID, MemberID, RideID, IsPassenger, IsBike)
@@ -209,8 +207,7 @@ public class InscriptionDAO extends DAO<Inscription> {
             boolean inscriptionAdded = ps.executeUpdate() > 0;
 
             if (!inscriptionAdded) {
-                memberDAO.creditBalance(member.getId(), fee);
-                member.setBalance(member.getBalance() + fee);
+                member.creditBalance(fee);
                 throw new Exception("Erreur lors de l'enregistrement de l'inscription.");
             }
             return true;

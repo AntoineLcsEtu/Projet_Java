@@ -185,24 +185,7 @@ public class MemberDAO extends DAO<Member> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, amount);
             ps.setInt(2, personId);
-            int rowsAffected = ps.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                String checkSql = "SELECT Balance FROM Member WHERE PersonID = ?";
-                try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
-                    checkPs.setInt(1, personId);
-                    ResultSet rs = checkPs.executeQuery();
-                    if (rs.next() && rs.getDouble("Balance") < 0) {
-                        String refundSql = "UPDATE Member SET Balance = 0 WHERE PersonID = ?";
-                        try (PreparedStatement refundPs = conn.prepareStatement(refundSql)) {
-                            refundPs.setInt(1, personId);
-                            refundPs.executeUpdate();
-                        }
-                        return false;
-                    }
-                }
-            }
-            return rowsAffected > 0;
+            return ps.executeUpdate() > 0;
         }
     }
 }
