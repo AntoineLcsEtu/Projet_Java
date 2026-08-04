@@ -68,11 +68,9 @@ public class Ride {
         return inscriptions.stream().filter(Inscription::isBike).mapToInt(r -> 1).sum();
     }
 
-    public String checkDriverNeeds() {
-        long drivers = vehicles.stream().filter(v -> v.getDriver() != null).count();
-        return drivers < vehicles.size() 
-            ? "Besoin de " + (vehicles.size() - drivers) + " conducteur(s)" 
-            : "Tous les véhicules ont un conducteur";
+    public int getMissingDriversCount() {
+        long driversAssigned = vehicles.stream().filter(v -> v.getDriver() != null).count();
+        return (int) Math.max(0, vehicles.size() - driversAssigned);
     }
     
     public boolean isDriver(Member member) {

@@ -47,7 +47,11 @@ public class MemberAvailability extends JFrame {
                     sb.append("  Frais: ").append(ride.getFee()).append(" €\n");
                     sb.append("  Sièges disponibles: ").append(ride.getAvailableSeatNumber()).append("\n");
                     sb.append("  Places vélo disponibles: ").append(ride.getAvailableBikeSpotNumber()).append("\n");
-                    sb.append("  Conducteurs: ").append(ride.checkDriverNeeds()).append("\n");
+                    int missingDrivers = ride.getMissingDriversCount();
+                    String driverStatus = missingDrivers > 0
+                        ? "Besoin de " + missingDrivers + " conducteur(s)"
+                        : "Tous les véhicules ont un conducteur";
+                    sb.append("  Conducteurs: ").append(driverStatus).append("\n");              
                     sb.append("----------------------------------------\n");
                 }
             }
