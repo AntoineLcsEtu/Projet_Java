@@ -29,19 +29,6 @@ public class Member extends Person {
         this.inscriptions = new ArrayList<>();
     }
 
-    public void calculateBalance() {
-        double membershipFee = 20.0;
-        int additionalCategories = categories.size() - 1;
-        if (additionalCategories > 0) {
-            membershipFee += additionalCategories * 5.0;
-        }
-        balance -= membershipFee;
-    }
-
-    public double checkBalance() {
-        return balance;
-    }
-
     public void addCategory(Category category) {
         if (!categories.contains(category)) {
             categories.add(category);
@@ -49,9 +36,9 @@ public class Member extends Person {
         }
     }
 
-    public void validateMembership() {
-        if (categories.isEmpty()) {
-            throw new IllegalStateException("Member must belong to at least one category");
+    public void validateMembership() throws Exception {
+        if (getCategoryCount() == 0) {
+            throw new IllegalStateException("Un membre doit appartenir à au moins une catégorie avant de pouvoir payer sa cotisation.");
         }
     }
     
@@ -90,6 +77,8 @@ public class Member extends Person {
     }
 
     public boolean payMembership() throws Exception {
+        validateMembership();
+
         double totalFee = calculateMembershipFee();
         if (getBalance() < totalFee) return false;
 
