@@ -15,6 +15,8 @@ import java.util.List;
 
 public class InscriptionDAO extends DAO<Inscription> {
 
+	public static final String MSG_SOLDE_INSUFFISANT = "Solde insuffisant pour participer à ce ride.";
+	
     @Override
     public boolean create(Inscription obj) {
         return false;
@@ -144,7 +146,7 @@ public class InscriptionDAO extends DAO<Inscription> {
     
     public boolean registerMember(Member member, int rideId, boolean isPassenger, boolean isBike) throws Exception {
         if (member.getBalance() < 0) {
-            throw new Exception("Solde insuffisant pour participer à ce ride. Solde actuel : " + 
+            throw new Exception(MSG_SOLDE_INSUFFISANT + " Solde actuel : " + 
                               String.format("%.2f", member.getBalance()) + " €");
         }
 
@@ -213,8 +215,8 @@ public class InscriptionDAO extends DAO<Inscription> {
         double rideFee = ride.getFee();
 
         if (member.getBalance() < rideFee) {
-            throw new Exception("Solde insuffisant pour participer à ce ride. " +
-                              "Solde actuel : " + String.format("%.2f", member.getBalance()) + 
+            throw new Exception(MSG_SOLDE_INSUFFISANT + 
+                              " Solde actuel : " + String.format("%.2f", member.getBalance()) + 
                               " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
         }
 
