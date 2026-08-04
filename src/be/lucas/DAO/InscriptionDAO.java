@@ -15,8 +15,8 @@ import java.util.List;
 
 public class InscriptionDAO extends DAO<Inscription> {
 
-	public static final String MSG_SOLDE_INSUFFISANT = "Solde insuffisant pour participer à ce ride.";
-	
+    public static final String MSG_SOLDE_INSUFFISANT = "Solde insuffisant pour participer à ce ride.";
+
     @Override
     public boolean create(Inscription obj) {
         return false;
@@ -143,15 +143,20 @@ public class InscriptionDAO extends DAO<Inscription> {
             }
         }
     }
-    
-    public boolean registerMember(Member member, int rideId, boolean isPassenger, boolean isBike) throws Exception {
-        if (member.getBalance() < 0) {
-            throw new Exception(MSG_SOLDE_INSUFFISANT + " Solde actuel : " + 
-                              String.format("%.2f", member.getBalance()) + " €");
-        }
 
+    public boolean isAlreadyRegistered(int memberId, int rideId) throws SQLException {
+        String sql = "SELECT 1 FROM Inscription WHERE MemberID = ? AND RideID = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, memberId);
+            ps.setInt(2, rideId);
+            return ps.executeQuery().next();
+        }
+    }
+
+    public boolean saveRegistration(Member member, int rideId, boolean isPassenger, boolean isBike, double fee) throws Exception {
         String maxSql = "SELECT MAX(InscriptionID) AS MaxID FROM Inscription";
-        int nextId = 1;  
+        int nextId = 1;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(maxSql);
@@ -159,65 +164,6 @@ public class InscriptionDAO extends DAO<Inscription> {
             if (rs.next() && rs.getObject("MaxID") != null) {
                 nextId = rs.getInt("MaxID") + 1;
             }
-        }
-
-        String checkSql = "SELECT 1 FROM Inscription WHERE MemberID = ? AND RideID = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(checkSql)) {
-            ps.setInt(1, member.getId());
-            ps.setInt(2, rideId);
-            if (ps.executeQuery().next()) {
-                throw new Exception("Vous êtes déjà inscrit à ce ride.");
-            }
-        }
-
-        Ride ride = new RideDAO().getRideWithDetails(rideId);
-        if (ride == null) {
-            throw new Exception("Ride introuvable.");
-        }
-
-        Vehicle memberVehicle = null;
-        boolean isDriver = !isPassenger;
-
-        if (isDriver) {
-            try {
-                memberVehicle = new VehicleDAO().getVehicleByDriverId(member.getId());
-                if (memberVehicle == null) {
-                    throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
-                }
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la récupération du véhicule : " + e.getMessage());
-            }
-        }
-
-        boolean needsPassengerSeat = isPassenger;
-        boolean needsBikeSpot = isBike;
-
-        if (isDriver && memberVehicle != null) {
-            needsPassengerSeat = false; 
-
-            if (isBike) {
-                int usedBikeSpotsInOwnVehicle = ride.getUsedBikeSpotsInVehicle(memberVehicle);
-                if (usedBikeSpotsInOwnVehicle + 1 > memberVehicle.getBikeSpotNumber()) {
-                    throw new Exception("Votre véhicule n'a plus de place pour un vélo.");
-                }
-                needsBikeSpot = false; 
-            }
-        }
-
-        if (needsPassengerSeat && ride.getAvailableSeatNumber() <= 0) {
-            throw new Exception("Plus de places passager disponibles pour ce ride.");
-        }
-        if (needsBikeSpot && ride.getAvailableBikeSpotNumber() <= 0) {
-            throw new Exception("Plus de places vélo disponibles pour ce ride.");
-        }
-
-        double rideFee = ride.getFee();
-
-        if (member.getBalance() < rideFee) {
-            throw new Exception(MSG_SOLDE_INSUFFISANT + 
-                              " Solde actuel : " + String.format("%.2f", member.getBalance()) + 
-                              " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
         }
 
         String addCategorySql = """
@@ -241,15 +187,12 @@ public class InscriptionDAO extends DAO<Inscription> {
             ps.executeUpdate();
         }
 
-        double newBalance = member.getBalance() - rideFee;
         MemberDAO memberDAO = new MemberDAO();
-        boolean balanceUpdated = memberDAO.creditBalance(member.getId(), -rideFee); // Montant négatif pour déduire
-        
+        boolean balanceUpdated = memberDAO.creditBalance(member.getId(), -fee);
         if (!balanceUpdated) {
             throw new Exception("Erreur lors de la mise à jour du solde.");
         }
-
-        member.setBalance(newBalance);
+        member.setBalance(member.getBalance() - fee);
 
         String sql = """
             INSERT INTO Inscription (InscriptionID, MemberID, RideID, IsPassenger, IsBike)
@@ -264,16 +207,13 @@ public class InscriptionDAO extends DAO<Inscription> {
             ps.setBoolean(4, isPassenger);
             ps.setBoolean(5, isBike);
             boolean inscriptionAdded = ps.executeUpdate() > 0;
-            
-            if (inscriptionAdded) {
-                System.out.println("Inscription réussie pour membre " + member.getId() + 
-                                 " au ride " + rideId + ". Balance mise à jour : " + newBalance);
-                return true;
-            } else {
-                memberDAO.creditBalance(member.getId(), rideFee);
-                member.setBalance(member.getBalance() + rideFee);
+
+            if (!inscriptionAdded) {
+                memberDAO.creditBalance(member.getId(), fee);
+                member.setBalance(member.getBalance() + fee);
                 throw new Exception("Erreur lors de l'enregistrement de l'inscription.");
             }
+            return true;
         }
     }
 }

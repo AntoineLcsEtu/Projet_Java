@@ -157,4 +157,8 @@ public class Member extends Person {
 		inscriptions.add(i);
 	}
 	
+	public boolean canAfford(double amount) {
+	    return balance >= amount;
+	}
+	
 }

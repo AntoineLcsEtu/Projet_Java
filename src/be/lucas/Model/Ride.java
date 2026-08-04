@@ -92,8 +92,59 @@ public class Ride {
     }
 
     public boolean registerMember(Member member, boolean isPassenger, boolean isBike) throws Exception {
-        InscriptionDAO dao = new InscriptionDAO();
-        return dao.registerMember(member, this.id, isPassenger, isBike);
+        InscriptionDAO inscriptionDAO = new InscriptionDAO();
+
+        if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
+            throw new Exception("Vous êtes déjà inscrit à ce ride.");
+        }
+
+        RideDAO rideDAO = new RideDAO();
+        Ride currentState = rideDAO.getRideWithDetails(this.id);
+        if (currentState == null) {
+            throw new Exception("Ride introuvable.");
+        }
+
+        Vehicle memberVehicle = null;
+        boolean isDriver = !isPassenger;
+
+        if (isDriver) {
+            memberVehicle = member.getVehicle();
+            if (memberVehicle == null) {
+                throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
+            }
+        }
+
+        boolean needsPassengerSeat = isPassenger;
+        boolean needsBikeSpot = isBike;
+
+        if (isDriver && memberVehicle != null) {
+            needsPassengerSeat = false;
+
+            if (isBike) {
+                int usedBikeSpotsInOwnVehicle = currentState.getUsedBikeSpotsInVehicle(memberVehicle);
+                if (usedBikeSpotsInOwnVehicle + 1 > memberVehicle.getBikeSpotNumber()) {
+                    throw new Exception("Votre véhicule n'a plus de place pour un vélo.");
+                }
+                needsBikeSpot = false;
+            }
+        }
+
+        if (needsPassengerSeat && !currentState.hasAvailableSeat()) {
+            throw new Exception("Plus de places passager disponibles pour ce ride.");
+        }
+        if (needsBikeSpot && !currentState.hasAvailableBikeSpot()) {
+            throw new Exception("Plus de places vélo disponibles pour ce ride.");
+        }
+
+        double rideFee = currentState.getFee();
+
+        if (!member.canAfford(rideFee)) {
+            throw new Exception(InscriptionDAO.MSG_SOLDE_INSUFFISANT +
+                              " Solde actuel : " + String.format("%.2f", member.getBalance()) +
+                              " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
+        }
+
+        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee);
     }
 
     public boolean assignMemberVehicle(Member member) throws Exception {
@@ -145,6 +196,14 @@ public class Ride {
     
     public void calculateFee() {
         this.fee = getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+    }
+    
+    public boolean hasAvailableSeat() {
+        return getAvailableSeatNumber() > 0;
+    }
+
+    public boolean hasAvailableBikeSpot() {
+        return getAvailableBikeSpotNumber() > 0;
     }
     
     @Override
