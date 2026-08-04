@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class Vehicle {
+	public static final double SEAT_FEE = 5.0;
+	public static final double BIKE_FEE = 2.5;
+
     private int id;
     private int seatNumber;
     private int bikeSpotNumber;
@@ -30,6 +33,10 @@ public class Vehicle {
         this.bikes.add(bike);
     }
 
+    public double calculateDriverFee() {
+	    return seatNumber * SEAT_FEE + bikeSpotNumber * BIKE_FEE;
+	}
+    
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getSeatNumber() { return seatNumber; }

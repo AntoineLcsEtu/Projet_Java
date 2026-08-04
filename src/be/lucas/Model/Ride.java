@@ -143,6 +143,10 @@ public class Ride {
             .count();
     }
     
+    public void calculateFee() {
+        this.fee = getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

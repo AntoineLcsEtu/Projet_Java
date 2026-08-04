@@ -55,9 +55,8 @@ public class Treasurer extends Person {
         int count = 0;
 
         for (Member driver : drivers) {
-            double fee = driver.getDrivenVehicle().getSeatNumber() * 5.0 +
-                         driver.getDrivenVehicle().getBikeSpotNumber() * 2.5;
-
+        	double fee = driver.getDrivenVehicle().calculateDriverFee();
+        	
             boolean success = memberDAO.creditBalance(driver.getId(), fee);
             if (success) {
                 log.append(String.format("✓ %s %s : +%.2f € (sièges: %d, vélo: %d)\n",

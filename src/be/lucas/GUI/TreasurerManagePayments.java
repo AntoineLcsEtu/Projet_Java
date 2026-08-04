@@ -76,8 +76,8 @@ public class TreasurerManagePayments extends JFrame {
 
                 for (int i = 0; i < drivers.size(); i++) {
                     Member driver = drivers.get(i);
-                    double fee = driver.getDrivenVehicle().getSeatNumber() * 5.0 +
-                                 driver.getDrivenVehicle().getBikeSpotNumber() * 2.5;
+                    double fee = driver.getDrivenVehicle().calculateDriverFee();
+                    
                     totalToPay += fee;
 
                     preview.append(String.format("%2d. %s %s\n", i + 1, driver.getFirstName(), driver.getName()));

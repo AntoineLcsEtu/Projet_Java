@@ -27,9 +27,7 @@ public class Manager extends Person {
     }
     
     public void calculateRideFee(Ride ride) {
-        int numPassengers = ride.getNeededSeatNumber();
-        int numBikes = ride.getNeededBikeSpotNumber();
-        ride.setFee(numPassengers * 5.0 + numBikes * 2.5);
+        ride.calculateFee();
     }
     
     public List<Ride> getAllRides() throws Exception {
@@ -41,6 +39,7 @@ public class Manager extends Person {
         RideDAO dao = new RideDAO();
         return dao.find(rideId); 
     }
+    
     
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
