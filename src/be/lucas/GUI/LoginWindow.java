@@ -58,25 +58,19 @@ public class LoginWindow extends JFrame {
 
             Person person = Person.authenticate(id, password);
 
-            if (person != null) {
-
-                if (person instanceof Member member) {
-                    new MemberDashboard(member).setVisible(true);
-
-                } else if (person instanceof Manager manager) {
-                    new ManagerDashboard(manager).setVisible(true);
-
-                } else if (person instanceof Treasurer treasurer) {
-                    new TreasurerDashboard(treasurer).setVisible(true);
-                }
-
-                dispose();
-
-            } else {
+            if (person == null) {
                 JOptionPane.showMessageDialog(this,
-                        "Identifiants incorrects",
-                        "Erreur",
+                        "ID ou mot de passe incorrect.",
+                        "Échec de connexion",
                         JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            switch (person) {
+	            case Member member -> new MemberDashboard(member).setVisible(true);
+	            case Manager manager -> new ManagerDashboard(manager).setVisible(true);
+	            case Treasurer treasurer -> new TreasurerDashboard(treasurer).setVisible(true);
+	            default -> {}
             }
 
         } catch (NumberFormatException ex) {

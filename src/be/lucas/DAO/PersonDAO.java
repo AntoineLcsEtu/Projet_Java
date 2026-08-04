@@ -30,10 +30,24 @@ public class PersonDAO extends DAO<Person> {
         return null;
     }
 	
-    public String login(int personId, String password) throws SQLException {
+    public String getStoredPassword(int personId) throws SQLException {
+        String sql = "SELECT Password FROM Person WHERE PersonID = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, personId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("Password");
+            }
+        }
+        return null;
+    }
+
+    public String getRole(int personId) throws SQLException {
         String sql = """
-            SELECT p.Password,
-                   m.MemberID, ma.ManagerID, t.TreasurerID
+            SELECT m.MemberID, ma.ManagerID, t.TreasurerID
             FROM Person p
             LEFT JOIN Member m ON p.PersonID = m.PersonID
             LEFT JOIN Manager ma ON p.PersonID = ma.PersonID
@@ -47,7 +61,7 @@ public class PersonDAO extends DAO<Person> {
             ps.setInt(1, personId);
             ResultSet rs = ps.executeQuery();
 
-            if (rs.next() && password.equals(rs.getString("Password"))) {
+            if (rs.next()) {
                 if (rs.getObject("MemberID") != null) return "MEMBER";
                 if (rs.getObject("ManagerID") != null) return "MANAGER";
                 if (rs.getObject("TreasurerID") != null) return "TREASURER";

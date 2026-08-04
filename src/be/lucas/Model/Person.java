@@ -25,15 +25,18 @@ public abstract class Person {
 
     public static Person authenticate(int id, String password) throws Exception {
         PersonDAO personDAO = new PersonDAO();
-        String role = personDAO.login(id, password);
+        String storedPassword = personDAO.getStoredPassword(id);
 
-        if (role != null) {
-            return switch (role) {
-                case "MEMBER"   -> new MemberDAO().getMemberByPersonId(id);
-                case "MANAGER"  -> new ManagerDAO().getManagerByPersonId(id);
-                case "TREASURER"-> new TreasurerDAO().getTreasurerByPersonId(id);
-                default         -> null;
-            };
+        if (storedPassword != null && storedPassword.equals(password)) {
+            String role = personDAO.getRole(id);
+            if (role != null) {
+                return switch (role) {
+                    case "MEMBER"   -> new MemberDAO().getMemberByPersonId(id);
+                    case "MANAGER"  -> new ManagerDAO().getManagerByPersonId(id);
+                    case "TREASURER"-> new TreasurerDAO().getTreasurerByPersonId(id);
+                    default         -> null;
+                };
+            }
         }
         return null;
     }
