@@ -2,6 +2,7 @@ package be.lucas.Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import be.lucas.DAO.InscriptionDAO;
 import be.lucas.DAO.RideDAO;
@@ -140,5 +141,18 @@ public class Ride {
                 return false;
             })
             .count();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ride ride = (Ride) o;
+        return id == ride.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

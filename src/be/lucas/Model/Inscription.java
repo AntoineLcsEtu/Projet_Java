@@ -1,5 +1,7 @@
 package be.lucas.Model;
 
+import java.util.Objects;
+
 public class Inscription {
     private int id;                    
     private Member member;            
@@ -32,4 +34,17 @@ public class Inscription {
 
     public boolean isBike() { return isBike; }
     public void setBike(boolean bike) { this.isBike = bike; }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Inscription inscription = (Inscription) o;
+        return id == inscription.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
