@@ -25,13 +25,8 @@ public class RideDAO extends DAO<Ride> {
     }
 
     @Override
-    public Ride find(int id) {
-        try {
-            return getRideWithDetails(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Ride find(int id) throws SQLException {
+        return getRideWithDetails(id);
     }
 
     public List<Ride> getAllRides() throws SQLException {

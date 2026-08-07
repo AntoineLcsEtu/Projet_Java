@@ -29,13 +29,8 @@ public class CategoryDAO extends DAO<Category> {
     }
 
     @Override
-    public Category find(int id) {
-        try {
-            return getCategoryById(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Category find(int id) throws SQLException {
+        return getCategoryById(id);
     }
     
     public Category getCategoryById(int categoryId) throws SQLException {

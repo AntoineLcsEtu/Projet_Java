@@ -30,13 +30,8 @@ public class MemberDAO extends DAO<Member> {
     }
 
     @Override
-    public Member find(int id) {
-        try {
-            return getMemberByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Member find(int id) throws SQLException {
+        return getMemberByPersonId(id);
     }
 
     public Member getMemberByPersonId(int personId) throws SQLException {

@@ -49,7 +49,7 @@ public class VehicleDAO extends DAO<Vehicle> {
     }
 
     @Override
-    public Vehicle find(int id) {
+    public Vehicle find(int id) throws SQLException {
         String sql = "SELECT VehicleID, SeatNumber, BikeSpotNumber FROM Vehicle WHERE VehicleID = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -64,8 +64,6 @@ public class VehicleDAO extends DAO<Vehicle> {
                     rs.getInt("BikeSpotNumber")
                 );
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
     }

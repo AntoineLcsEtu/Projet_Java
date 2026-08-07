@@ -33,15 +33,15 @@ public class InscriptionDAO extends DAO<Inscription> {
     }
 
     @Override
-    public Inscription find(int id) {
-    	String sql = """
-		    SELECT i.InscriptionID, i.RideID, i.IsPassenger, i.IsBike, i.BikeID,
-		           p.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-		    FROM Inscription i
-		    JOIN Member m ON i.MemberID = m.MemberID
-		    JOIN Person p ON m.MemberID = p.PersonID
-		    WHERE i.InscriptionID = ?
-		    """;
+    public Inscription find(int id) throws SQLException {
+        String sql = """
+            SELECT i.InscriptionID, i.RideID, i.IsPassenger, i.IsBike, i.BikeID,
+                   p.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+            FROM Inscription i
+            JOIN Member m ON i.MemberID = m.MemberID
+            JOIN Person p ON m.MemberID = p.PersonID
+            WHERE i.InscriptionID = ?
+            """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -77,8 +77,6 @@ public class InscriptionDAO extends DAO<Inscription> {
                 inscription.setId(id);
                 return inscription;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return null;
     }

@@ -27,13 +27,8 @@ public class ManagerDAO extends DAO<Manager> {
     }
 
     @Override
-    public Manager find(int id) {
-        try {
-            return getManagerByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Manager find(int id) throws SQLException {
+        return getManagerByPersonId(id);
     }
 
 

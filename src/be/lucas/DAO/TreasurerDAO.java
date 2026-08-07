@@ -27,13 +27,8 @@ public class TreasurerDAO extends DAO<Treasurer> {
     }
 
     @Override
-    public Treasurer find(int id) {
-        try {
-            return getTreasurerByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Treasurer find(int id) throws SQLException {
+        return getTreasurerByPersonId(id);
     }
 
 	
