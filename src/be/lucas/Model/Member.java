@@ -1,5 +1,6 @@
 package be.lucas.Model;
 
+import java.util.Date;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +108,9 @@ public class Member extends Person {
 
     public List<Ride> getAvailableRides() throws Exception {
         RideDAO dao = new RideDAO();
-        return dao.getAvailableRidesForMember(getId());
+        List<Ride> rides = dao.getAvailableRidesForMember(getId());
+        rides.removeIf(ride -> !ride.getStartDate().after(new Date()));
+        return rides;
     }
 
 
