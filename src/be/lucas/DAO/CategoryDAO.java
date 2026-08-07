@@ -37,6 +37,7 @@ public class CategoryDAO extends DAO<Category> {
             return null;
         }
     }
+    
     public Category getCategoryById(int categoryId) throws SQLException {
         String sql = """
             SELECT c.CategoryID, c.Type
@@ -69,9 +70,10 @@ public class CategoryDAO extends DAO<Category> {
         }
         return null;
     }
+    
     public Manager getManagerByCategoryId(int categoryId) throws SQLException {
         String sql = """
-            SELECT ma.PersonID
+            SELECT ma.ManagerID AS PersonID
             FROM Manager ma
             WHERE ma.CategoryID = ?
             """;
