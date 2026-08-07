@@ -1,10 +1,11 @@
 package be.lucas.Model;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import be.lucas.DAO.RideDAO;
-
+import java.util.stream.Collectors;
 public class Manager extends Person {
     private Category category;
 
@@ -40,6 +41,15 @@ public class Manager extends Person {
         return dao.find(rideId); 
     }
     
+    public List<Ride> getRidesInMyCategory() throws Exception {
+        if (category == null) {
+            return new ArrayList<>();
+        }
+        List<Ride> allRides = getAllRides();
+        return allRides.stream()
+            .filter(r -> r.getCategoryId() == category.getId())
+            .collect(Collectors.toList());
+    } 
     
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }

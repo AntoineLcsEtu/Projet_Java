@@ -204,6 +204,14 @@ public class Ride {
         return getAvailableBikeSpotNumber() > 0;
     }
     
+    public double getPassengerFeeTotal() {
+        return getNeededSeatNumber() * Vehicle.SEAT_FEE;
+    }
+
+    public double getBikeFeeTotal() {
+        return getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

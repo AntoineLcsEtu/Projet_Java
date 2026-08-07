@@ -74,8 +74,8 @@ public class ManagerCalculateFee extends JFrame {
                 	    "<b>Passagers inscrits :</b> %d × %.2f € = %.2f €<br>" +
                 	    "<b>Vélos inscrits :</b> %d × %.2f € = %.2f €<br><br>" +
                 	    "<h3>Total à facturer : %.2f €</h3></html>",
-                	    rideId, passengers, Vehicle.SEAT_FEE, passengers * Vehicle.SEAT_FEE,
-                	    bikes, Vehicle.BIKE_FEE, bikes * Vehicle.BIKE_FEE, total
+                	    rideId, passengers, Vehicle.SEAT_FEE, ride.getPassengerFeeTotal(),
+                	    bikes, Vehicle.BIKE_FEE, ride.getBikeFeeTotal(), total
                 	);
                 JOptionPane.showMessageDialog(
                     this,
