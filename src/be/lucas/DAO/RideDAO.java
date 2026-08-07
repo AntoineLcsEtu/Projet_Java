@@ -167,14 +167,14 @@ public class RideDAO extends DAO<Ride> {
     }
     
     private void loadInscriptionsForRide(Ride ride) throws SQLException {
-        String sql = """
-            SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike,
-                   m.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-            FROM Inscription i
-            JOIN Member m ON i.MemberID = m.MemberID
-            JOIN Person p ON m.PersonID = p.PersonID
-            WHERE i.RideID = ?
-            """;
+    	String sql = """
+		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
+		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+		    FROM Inscription i
+		    JOIN Member m ON i.MemberID = m.MemberID
+		    JOIN Person p ON m.MemberID = p.PersonID
+		    WHERE i.RideID = ?
+		    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -198,6 +198,10 @@ public class RideDAO extends DAO<Ride> {
                     rs.getBoolean("IsPassenger"),
                     rs.getBoolean("IsBike")
                 );
+                int bikeId = rs.getInt("BikeID");
+                if (!rs.wasNull()) {
+                    inscription.setAssignedBike(new BikeDAO().find(bikeId));
+                }
                 inscription.setId(rs.getInt("InscriptionID"));
 
                 ride.addRegistration(inscription);

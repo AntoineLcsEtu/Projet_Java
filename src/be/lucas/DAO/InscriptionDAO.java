@@ -34,14 +34,14 @@ public class InscriptionDAO extends DAO<Inscription> {
 
     @Override
     public Inscription find(int id) {
-        String sql = """
-            SELECT i.InscriptionID, i.RideID, i.IsPassenger, i.IsBike,
-                   p.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-            FROM Inscription i
-            JOIN Member m ON i.MemberID = m.MemberID
-            JOIN Person p ON m.PersonID = p.PersonID
-            WHERE i.InscriptionID = ?
-            """;
+    	String sql = """
+		    SELECT i.InscriptionID, i.RideID, i.IsPassenger, i.IsBike, i.BikeID,
+		           p.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+		    FROM Inscription i
+		    JOIN Member m ON i.MemberID = m.MemberID
+		    JOIN Person p ON m.MemberID = p.PersonID
+		    WHERE i.InscriptionID = ?
+		    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -70,6 +70,10 @@ public class InscriptionDAO extends DAO<Inscription> {
                     rs.getBoolean("IsPassenger"),
                     rs.getBoolean("IsBike")
                 );
+                int bikeId = rs.getInt("BikeID");
+                if (!rs.wasNull()) {
+                    inscription.setAssignedBike(new BikeDAO().find(bikeId));
+                }
                 inscription.setId(id);
                 return inscription;
             }
@@ -149,7 +153,7 @@ public class InscriptionDAO extends DAO<Inscription> {
     
     private void loadInscriptionsForRide(Ride ride) throws SQLException {
     	String sql = """
-    		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike,
+    		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
     		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
     		    FROM Inscription i
     		    JOIN Member m ON i.MemberID = m.MemberID
@@ -179,6 +183,10 @@ public class InscriptionDAO extends DAO<Inscription> {
                     rs.getBoolean("IsPassenger"),
                     rs.getBoolean("IsBike")
                 );
+                int bikeId = rs.getInt("BikeID");
+                if (!rs.wasNull()) {
+                    inscription.setAssignedBike(new BikeDAO().find(bikeId));
+                }
                 inscription.setId(rs.getInt("InscriptionID"));
 
                 ride.addRegistration(inscription);

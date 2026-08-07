@@ -3,11 +3,12 @@ package be.lucas.Model;
 import java.util.Objects;
 
 public class Inscription {
-    private int id;                    
-    private Member member;            
-    private Ride ride;  
+    private int id;
+    private Member member;
+    private Ride ride;
     private boolean isPassenger;
     private boolean isBike;
+    private Bike assignedBike;
 
     public Inscription(Member member, Ride ride, boolean isPassenger, boolean isBike) {
         this.member = member;
@@ -24,9 +25,9 @@ public class Inscription {
 
     public Ride getRide() { return ride; }
     public void setRide(Ride ride) { this.ride = ride; }
-    
-    public int getRideId() { 
-        return ride != null ? ride.getId() : 0; 
+
+    public int getRideId() {
+        return ride != null ? ride.getId() : 0;
     }
 
     public boolean isPassenger() { return isPassenger; }
@@ -34,7 +35,10 @@ public class Inscription {
 
     public boolean isBike() { return isBike; }
     public void setBike(boolean bike) { this.isBike = bike; }
-    
+
+    public Bike getAssignedBike() { return assignedBike; }
+    public void setAssignedBike(Bike assignedBike) { this.assignedBike = assignedBike; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
