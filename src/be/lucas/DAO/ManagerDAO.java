@@ -42,7 +42,7 @@ public class ManagerDAO extends DAO<Manager> {
         String sql = """
             SELECT p.*, ma.ManagerID, ma.CategoryID
             FROM Person p
-            JOIN Manager ma ON p.PersonID = ma.PersonID
+            JOIN Manager ma ON p.PersonID = ma.ManagerID
             WHERE p.PersonID = ?
             """;
 
