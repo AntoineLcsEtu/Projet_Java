@@ -27,7 +27,20 @@ public class PersonDAO extends DAO<Person> {
 
     @Override
     public Person find(int id) {
-        return null;
+        try {
+            String role = getRole(id);
+            if (role == null) return null;
+
+            return switch (role) {
+                case "MEMBER"    -> new MemberDAO().getMemberByPersonId(id);
+                case "MANAGER"   -> new ManagerDAO().getManagerByPersonId(id);
+                case "TREASURER" -> new TreasurerDAO().getTreasurerByPersonId(id);
+                default          -> null;
+            };
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 	
     public String getStoredPassword(int personId) throws SQLException {

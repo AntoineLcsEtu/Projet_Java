@@ -34,6 +34,48 @@ public class InscriptionDAO extends DAO<Inscription> {
 
     @Override
     public Inscription find(int id) {
+        String sql = """
+            SELECT i.InscriptionID, i.RideID, i.IsPassenger, i.IsBike,
+                   p.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+            FROM Inscription i
+            JOIN Member m ON i.MemberID = m.MemberID
+            JOIN Person p ON m.PersonID = p.PersonID
+            WHERE i.InscriptionID = ?
+            """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Member member = new Member(
+                    rs.getString("Name"),
+                    rs.getString("FirstName"),
+                    rs.getString("Phone"),
+                    rs.getInt("PersonID"),
+                    rs.getString("Password"),
+                    rs.getDouble("Balance")
+                );
+
+                Ride ride = new RideDAO().getRideWithDetails(rs.getInt("RideID"));
+                if (ride == null) {
+                    return null;
+                }
+
+                Inscription inscription = new Inscription(
+                    member,
+                    ride,
+                    rs.getBoolean("IsPassenger"),
+                    rs.getBoolean("IsBike")
+                );
+                inscription.setId(id);
+                return inscription;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
     
