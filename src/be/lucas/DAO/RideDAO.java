@@ -75,8 +75,7 @@ public class RideDAO extends DAO<Ride> {
                         }
                     }
                     
-                    loadInscriptionsForRide(currentRide);
-                    
+                    new InscriptionDAO().loadInscriptionsForRide(currentRide);                    
                     rides.add(currentRide);
                     currentRideId = rideId;
                 }
@@ -141,7 +140,7 @@ public class RideDAO extends DAO<Ride> {
                         }
                     }
                     
-                    loadInscriptionsForRide(ride);
+                    new InscriptionDAO().loadInscriptionsForRide(ride);
                 }
 
                 int vehicleId = rs.getInt("VehicleID");
@@ -166,48 +165,6 @@ public class RideDAO extends DAO<Ride> {
         return ride;
     }
     
-    private void loadInscriptionsForRide(Ride ride) throws SQLException {
-    	String sql = """
-		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
-		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-		    FROM Inscription i
-		    JOIN Member m ON i.MemberID = m.MemberID
-		    JOIN Person p ON m.MemberID = p.PersonID
-		    WHERE i.RideID = ?
-		    """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, ride.getId());
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Member member = new Member(
-                    rs.getString("Name"),
-                    rs.getString("FirstName"),
-                    rs.getString("Phone"),
-                    rs.getInt("PersonID"),
-                    rs.getString("Password"),
-                    rs.getDouble("Balance")
-                );
-
-                Inscription inscription = new Inscription(
-                    member,
-                    ride, 
-                    rs.getBoolean("IsPassenger"),
-                    rs.getBoolean("IsBike")
-                );
-                int bikeId = rs.getInt("BikeID");
-                if (!rs.wasNull()) {
-                    inscription.setAssignedBike(new BikeDAO().find(bikeId));
-                }
-                inscription.setId(rs.getInt("InscriptionID"));
-
-                ride.addRegistration(inscription);
-            }
-        }
-    }
     
     public List<Ride> getAvailableRidesForMember(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
@@ -249,7 +206,7 @@ public class RideDAO extends DAO<Ride> {
                 }
                 
                 loadVehiclesForRide(ride);
-                loadInscriptionsForRide(ride);
+                new InscriptionDAO().loadInscriptionsForRide(ride);
                 
                 rides.add(ride);
             }
@@ -336,7 +293,7 @@ public class RideDAO extends DAO<Ride> {
                 }
                 
                 loadVehiclesForRide(ride);
-                loadInscriptionsForRide(ride);
+                new InscriptionDAO().loadInscriptionsForRide(ride);
                 
                 rides.add(ride);
             }

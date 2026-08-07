@@ -151,7 +151,7 @@ public class InscriptionDAO extends DAO<Inscription> {
         }
     }
     
-    private void loadInscriptionsForRide(Ride ride) throws SQLException {
+    void loadInscriptionsForRide(Ride ride) throws SQLException {
     	String sql = """
     		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
     		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
