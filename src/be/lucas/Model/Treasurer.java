@@ -68,39 +68,8 @@ public class Treasurer extends Person {
 
     public void claimFee() {}
 
-    public Object[] verifyMembershipFees() throws Exception {
+    public List<Member> getMembershipReport() throws Exception {
         MemberDAO memberDAO = new MemberDAO();
-        List<Member> members = memberDAO.getAllMembersWithCategories();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("═══════════════════════════════════════════════════════════════════════\n");
-        sb.append("           RAPPORT DE VÉRIFICATION DES COTISATIONS\n");
-        sb.append("═══════════════════════════════════════════════════════════════════════\n\n");
-
-        if (members.isEmpty()) {
-            sb.append("Aucun membre trouvé.\n");
-            return new Object[]{ sb.toString(), 0, 0 };
-        }
-
-        int paidCount = 0, unpaidCount = 0;
-
-        for (int i = 0; i < members.size(); i++) {
-            Member m = members.get(i);
-
-            boolean isPaid = m.isMembershipPaid();
-
-            if (isPaid) paidCount++;
-            else unpaidCount++;
-
-            sb.append(String.format("%3d. %s %s\n", i + 1, m.getFirstName(), m.getName()));
-            sb.append(String.format("     Solde actuel   : %.2f €\n", m.getBalance()));
-            sb.append(String.format("     Statut         : %s\n",
-                    isPaid ? "PAYÉE " : "NON PAYÉE"));
-            sb.append("     " + "-".repeat(60) + "\n");
-        }
-
-        sb.append(String.format("\nRÉSUMÉ : %d membre(s) à jour | %d membre(s) non à jour\n", paidCount, unpaidCount));
-
-        return new Object[]{ sb.toString(), paidCount, unpaidCount };
+        return memberDAO.getAllMembersWithCategories();
     }
 }
