@@ -41,7 +41,7 @@ public class TreasurerDAO extends DAO<Treasurer> {
         String sql = """
             SELECT p.*, t.TreasurerID
             FROM Person p
-            JOIN Treasurer t ON p.PersonID = t.PersonID
+            JOIN Treasurer t ON p.PersonID = t.TreasurerID
             WHERE p.PersonID = ?
             """;
 
