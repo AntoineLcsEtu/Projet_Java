@@ -37,13 +37,13 @@ public class RideDAO extends DAO<Ride> {
     public List<Ride> getAllRides() throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
-            SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CategoryID,
-                   v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
-            FROM Ride r
-            LEFT JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
-            LEFT JOIN Vehicle v ON rv.VehicleID = v.VehicleID
-            ORDER BY r.StartDate
-            """;
+        	    SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID,
+        	           v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
+        	    FROM Ride r
+        	    LEFT JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
+        	    LEFT JOIN Vehicle v ON rv.VehicleID = v.VehicleID
+        	    ORDER BY r.StartDate
+        	    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -129,7 +129,7 @@ public class RideDAO extends DAO<Ride> {
                         rs.getDouble("Fee")
                     );
                     
-                    int categoryId = rs.getInt("CategoryID");
+                    int categoryId = rs.getInt("CalendarID");
                     if (!rs.wasNull()) {
                         CategoryDAO categoryDAO = new CategoryDAO();
                         Category category = categoryDAO.getCategoryById(categoryId);
@@ -208,12 +208,12 @@ public class RideDAO extends DAO<Ride> {
     public List<Ride> getAvailableRidesForMember(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
-            SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CategoryID
-            FROM Ride r
-            WHERE r.RideID NOT IN (
+            SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID
+			FROM Ride r
+			WHERE r.RideID NOT IN (
                 SELECT i.RideID FROM Inscription i
                 JOIN Member m ON i.MemberID = m.MemberID
-                WHERE m.PersonID = ?
+                WHERE m.MemberID = ?
             )
             ORDER BY r.StartDate
             """;
@@ -289,14 +289,14 @@ public class RideDAO extends DAO<Ride> {
     public List<Ride> getRidesForVehicleOffer(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
-            SELECT DISTINCT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CategoryID
-            FROM Ride r
-            JOIN Inscription i ON r.RideID = i.RideID
+    	    SELECT DISTINCT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID
+    	    FROM Ride r
+    	    JOIN Inscription i ON r.RideID = i.RideID
             JOIN Member m ON i.MemberID = m.MemberID
             LEFT JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
             LEFT JOIN Vehicle v ON rv.VehicleID = v.VehicleID
-            WHERE m.PersonID = ?
-              AND (v.DriverID IS NULL OR v.DriverID != ?)
+            WHERE m.MemberID = ?
+        	  AND (v.DriverID IS NULL OR v.DriverID != ?)	
               AND NOT EXISTS (
                   SELECT 1 FROM Ride_Vehicle rv2
                   JOIN Vehicle v2 ON rv2.VehicleID = v2.VehicleID
@@ -361,15 +361,15 @@ public class RideDAO extends DAO<Ride> {
     public List<Member> getDriversFromCompletedRides() throws SQLException {
         List<Member> drivers = new ArrayList<>();
         String sql = """
-            SELECT DISTINCT m.PersonID, p.Name, p.FirstName, p.Phone, p.Password,
-                   m.Balance, v.SeatNumber, v.BikeSpotNumber
-            FROM Ride r
-            JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
-            JOIN Vehicle v ON rv.VehicleID = v.VehicleID
-            JOIN Member m ON v.DriverID = m.PersonID
-            JOIN Person p ON m.PersonID = p.PersonID
-            WHERE r.StartDate < ?
-            """;
+        	    SELECT DISTINCT m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password,
+        	           m.Balance, v.SeatNumber, v.BikeSpotNumber
+        	    FROM Ride r
+        	    JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
+        	    JOIN Vehicle v ON rv.VehicleID = v.VehicleID
+        	    JOIN Member m ON v.DriverID = m.MemberID
+        	    JOIN Person p ON m.MemberID = p.PersonID
+        	    WHERE r.StartDate < ?
+        	    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -412,9 +412,9 @@ public class RideDAO extends DAO<Ride> {
         }
 
         String insertSql = """
-            INSERT INTO Ride (RideID, StartPlace, StartDate, Fee, CategoryID)
-            VALUES (?, ?, ?, ?, ?)
-            """;
+    	    INSERT INTO Ride (RideID, StartPlace, StartDate, Fee, CalendarID)
+    	    VALUES (?, ?, ?, ?, ?)
+    	    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(insertSql)) {

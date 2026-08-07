@@ -86,8 +86,8 @@ public class InscriptionDAO extends DAO<Inscription> {
             FROM Inscription i
             JOIN Ride r ON i.RideID = r.RideID
             WHERE i.MemberID = (
-                SELECT MemberID FROM Member WHERE PersonID = ?
-            )
+			    SELECT MemberID FROM Member WHERE MemberID = ?
+			)
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -148,14 +148,14 @@ public class InscriptionDAO extends DAO<Inscription> {
     }
     
     private void loadInscriptionsForRide(Ride ride) throws SQLException {
-        String sql = """
-            SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike,
-                   m.PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-            FROM Inscription i
-            JOIN Member m ON i.MemberID = m.MemberID
-            JOIN Person p ON m.PersonID = p.PersonID
-            WHERE i.RideID = ?
-            """;
+    	String sql = """
+    		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike,
+    		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+    		    FROM Inscription i
+    		    JOIN Member m ON i.MemberID = m.MemberID
+    		    JOIN Person p ON m.MemberID = p.PersonID
+    		    WHERE i.RideID = ?
+    		    """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -210,15 +210,15 @@ public class InscriptionDAO extends DAO<Inscription> {
 
         String addCategorySql = """
                 INSERT INTO Member_Category (MemberID, CategoryID)
-                SELECT m.MemberID, r.CategoryID
+                SELECT m.MemberID, r.CalendarID
                 FROM Member m
                 JOIN Ride r ON r.RideID = ?
-                WHERE m.PersonID = ?
-                  AND r.CategoryID IS NOT NULL
+                WHERE m.MemberID = ?
+                  AND r.CalendarID IS NOT NULL
                   AND NOT EXISTS (
                       SELECT 1 FROM Member_Category mc
                       WHERE mc.MemberID = m.MemberID
-                        AND mc.CategoryID = r.CategoryID
+                        AND mc.CategoryID = r.CalendarID
                   )
                 """;
 
@@ -234,9 +234,19 @@ public class InscriptionDAO extends DAO<Inscription> {
             throw new Exception("Erreur lors de la mise à jour du solde.");
         }
 
+        String findBikeSql = "SELECT MIN(BikeID) AS AnyBikeID FROM Bike";
+        int placeholderBikeId = 0;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(findBikeSql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                placeholderBikeId = rs.getInt("AnyBikeID");
+            }
+        }
+
         String sql = """
-            INSERT INTO Inscription (InscriptionID, MemberID, RideID, IsPassenger, IsBike)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO Inscription (InscriptionID, MemberID, RideID, IsPassenger, IsBike, BikeID)
+            VALUES (?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -246,13 +256,22 @@ public class InscriptionDAO extends DAO<Inscription> {
             ps.setInt(3, rideId);
             ps.setBoolean(4, isPassenger);
             ps.setBoolean(5, isBike);
+            ps.setInt(6, placeholderBikeId);
             boolean inscriptionAdded = ps.executeUpdate() > 0;
 
             if (!inscriptionAdded) {
                 member.creditBalance(fee);
                 throw new Exception("Erreur lors de l'enregistrement de l'inscription.");
             }
-            return true;
         }
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE Inscription SET BikeID = NULL WHERE InscriptionID = ?")) {
+            ps.setInt(1, nextId);
+            ps.executeUpdate();
+        }
+
+        return true;
+        
     }
 }
