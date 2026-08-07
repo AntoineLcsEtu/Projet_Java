@@ -57,9 +57,9 @@ public class PersonDAO extends DAO<Person> {
         String sql = """
             SELECT m.MemberID, ma.ManagerID, t.TreasurerID
             FROM Person p
-            LEFT JOIN Member m ON p.PersonID = m.PersonID
-            LEFT JOIN Manager ma ON p.PersonID = ma.PersonID
-            LEFT JOIN Treasurer t ON p.PersonID = t.PersonID
+            LEFT JOIN Member m ON p.PersonID = m.MemberID
+            LEFT JOIN Manager ma ON p.PersonID = ma.ManagerID
+            LEFT JOIN Treasurer t ON p.PersonID = t.TreasurerID
             WHERE p.PersonID = ?
             """;
 

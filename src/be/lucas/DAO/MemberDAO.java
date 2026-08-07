@@ -38,7 +38,7 @@ public class MemberDAO extends DAO<Member> {
         String sql = """
             SELECT p.*, m.MemberID, m.Balance, m.MembershipPaid
             FROM Person p
-            JOIN Member m ON p.PersonID = m.PersonID
+            JOIN Member m ON p.PersonID = m.MemberID
             WHERE p.PersonID = ?
             """;
 
@@ -95,7 +95,7 @@ public class MemberDAO extends DAO<Member> {
         String sql = """
             UPDATE Member 
             SET Balance = ?, MembershipPaid = ? 
-            WHERE PersonID = ?
+            WHERE MemberID = ?
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -114,7 +114,7 @@ public class MemberDAO extends DAO<Member> {
             SELECT COUNT(*) 
             FROM Member_Category mc
             JOIN Member m ON mc.MemberID = m.MemberID
-            WHERE m.PersonID = ?
+            WHERE m.MemberID = ?
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -135,7 +135,7 @@ public class MemberDAO extends DAO<Member> {
                    m.Balance, m.MembershipPaid,
                    c.CategoryID
             FROM Person p
-            JOIN Member m ON p.PersonID = m.PersonID
+            JOIN Member m ON p.PersonID = m.MemberID
             LEFT JOIN Member_Category mc ON m.MemberID = mc.MemberID
             LEFT JOIN Category c ON mc.CategoryID = c.CategoryID
             ORDER BY p.Name, p.FirstName
@@ -175,7 +175,7 @@ public class MemberDAO extends DAO<Member> {
     }
     
     public boolean creditBalance(int personId, double amount) throws SQLException {
-        String sql = "UPDATE Member SET Balance = Balance + ? WHERE PersonID = ?";
+        String sql = "UPDATE Member SET Balance = Balance + ? WHERE MemberID = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, amount);
