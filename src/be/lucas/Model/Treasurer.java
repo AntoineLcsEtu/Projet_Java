@@ -31,39 +31,24 @@ public class Treasurer extends Person {
 
     public Object[] payDriver() throws Exception {
         RideDAO rideDAO = new RideDAO();
-
         List<Member> drivers = rideDAO.getDriversFromCompletedRides();
-        StringBuilder log = new StringBuilder();
 
-        if (drivers.isEmpty()) {
-            log.append("Aucun conducteur à payer (aucun ride terminé).\n");
-            return new Object[]{ log.toString(), 0.0 };
-        }
-
+        List<Member> paidDrivers = new ArrayList<>();
+        List<Member> failedDrivers = new ArrayList<>();
         double totalPaid = 0.0;
-        int count = 0;
 
         for (Member driver : drivers) {
-        	double fee = driver.getDrivenVehicle().calculateDriverFee();
-        	
-        	boolean success = driver.creditBalance(fee);
+            double fee = driver.getDrivenVehicle().calculateDriverFee();
+            boolean success = driver.creditBalance(fee);
             if (success) {
-                log.append(String.format("✓ %s %s : +%.2f € (sièges: %d, vélo: %d)\n",
-                        driver.getFirstName(), driver.getName(), fee,
-                        driver.getDrivenVehicle().getSeatNumber(),
-                        driver.getDrivenVehicle().getBikeSpotNumber()));
+                paidDrivers.add(driver);
                 totalPaid += fee;
-                count++;
             } else {
-                log.append(String.format("✗ ÉCHEC pour %s %s\n",
-                        driver.getFirstName(), driver.getName()));
+                failedDrivers.add(driver);
             }
         }
 
-        log.append("\n").append("═".repeat(50)).append("\n");
-        log.append(String.format("RÉSUMÉ : %d conducteur(s) payé(s) | Total : %.2f €\n", count, totalPaid));
-
-        return new Object[]{ log.toString(), totalPaid };
+        return new Object[]{ paidDrivers, failedDrivers, totalPaid };
     }
 
     public void claimFee() {}
