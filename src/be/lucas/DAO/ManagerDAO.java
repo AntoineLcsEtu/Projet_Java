@@ -27,13 +27,8 @@ public class ManagerDAO extends DAO<Manager> {
     }
 
     @Override
-    public Manager find(int id) {
-        try {
-            return getManagerByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Manager find(int id) throws SQLException {
+        return getManagerByPersonId(id);
     }
 
 
@@ -42,7 +37,7 @@ public class ManagerDAO extends DAO<Manager> {
         String sql = """
             SELECT p.*, ma.ManagerID, ma.CategoryID
             FROM Person p
-            JOIN Manager ma ON p.PersonID = ma.PersonID
+            JOIN Manager ma ON p.PersonID = ma.ManagerID
             WHERE p.PersonID = ?
             """;
 

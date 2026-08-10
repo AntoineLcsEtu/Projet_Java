@@ -1,5 +1,6 @@
 package be.lucas.Model;
 
+import java.util.Date;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,19 +30,6 @@ public class Member extends Person {
         this.inscriptions = new ArrayList<>();
     }
 
-    public void calculateBalance() {
-        double membershipFee = 20.0;
-        int additionalCategories = categories.size() - 1;
-        if (additionalCategories > 0) {
-            membershipFee += additionalCategories * 5.0;
-        }
-        balance -= membershipFee;
-    }
-
-    public double checkBalance() {
-        return balance;
-    }
-
     public void addCategory(Category category) {
         if (!categories.contains(category)) {
             categories.add(category);
@@ -49,9 +37,9 @@ public class Member extends Person {
         }
     }
 
-    public void validateMembership() {
-        if (categories.isEmpty()) {
-            throw new IllegalStateException("Member must belong to at least one category");
+    public void validateMembership() throws Exception {
+        if (getCategoryCount() == 0) {
+            throw new IllegalStateException("Un membre doit appartenir à au moins une catégorie avant de pouvoir payer sa cotisation.");
         }
     }
     
@@ -90,6 +78,8 @@ public class Member extends Person {
     }
 
     public boolean payMembership() throws Exception {
+        validateMembership();
+
         double totalFee = calculateMembershipFee();
         if (getBalance() < totalFee) return false;
 
@@ -118,7 +108,9 @@ public class Member extends Person {
 
     public List<Ride> getAvailableRides() throws Exception {
         RideDAO dao = new RideDAO();
-        return dao.getAvailableRidesForMember(getId());
+        List<Ride> rides = dao.getAvailableRidesForMember(getId());
+        rides.removeIf(ride -> !ride.getStartDate().after(new Date()));
+        return rides;
     }
 
 
@@ -135,12 +127,27 @@ public class Member extends Person {
         if (amount <= 0) {
             throw new IllegalArgumentException("Le montant doit être positif");
         }
+        return applyBalanceChange(amount);
+    }
+    
+    public boolean debitBalance(double amount) throws Exception {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Le montant doit être positif");
+        }
+        return applyBalanceChange(-amount);
+    }
+
+    private boolean applyBalanceChange(double amount) throws Exception {
+        double newBalance = this.balance + amount;
+        if (newBalance < 0) {
+            amount = -this.balance;
+            newBalance = 0;
+        }
 
         MemberDAO dao = new MemberDAO();
         boolean success = dao.creditBalance(this.getId(), amount);
-
         if (success) {
-            this.balance += amount;  
+            this.balance = newBalance;
         }
         return success;
     }
@@ -166,6 +173,10 @@ public class Member extends Person {
 	public void addInscritions(Inscription i)
 	{
 		inscriptions.add(i);
+	}
+	
+	public boolean canAfford(double amount) {
+	    return balance >= amount;
 	}
 	
 }

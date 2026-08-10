@@ -2,6 +2,7 @@ package be.lucas.Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Category {
     private int id;
@@ -30,4 +31,17 @@ public class Category {
     public List<Member> getMembers() { return members; }
     public CategoryType getType() { return type; }
     public void setType(CategoryType type) { this.type = type; }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Category category = (Category) o;
+        return id == category.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

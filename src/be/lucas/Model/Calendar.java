@@ -2,6 +2,7 @@ package be.lucas.Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Calendar {
     private int calendarId;
@@ -31,4 +32,17 @@ public class Calendar {
         }
     }
     public List<Ride> getRides() { return rides; }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Calendar calendar = (Calendar) o;
+        return calendarId == calendar.calendarId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(calendarId);
+    }
 }

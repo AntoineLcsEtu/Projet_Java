@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ManagerAvailability extends JFrame {
 
@@ -46,18 +45,12 @@ public class ManagerAvailability extends JFrame {
         sb.append("═══════════════════════════════════════════════════════════════════════════\n\n");
 
         try {
-            if (manager.getCategory() == null) {
-                sb.append("Aucune catégorie associée au manager.\n");
-            } else {
-                int categoryId = manager.getCategory().getId();
+        	if (manager.getCategory() == null) {
+        	    sb.append("Aucune catégorie associée au manager.\n");
+        	} else {
+        	    List<Ride> categoryRides = manager.getRidesInMyCategory();
 
-                List<Ride> allRides = manager.getAllRides();
-
-                List<Ride> categoryRides = allRides.stream()
-                    .filter(r -> r.getCategoryId() == categoryId)
-                    .collect(Collectors.toList());
-
-                if (categoryRides.isEmpty()) {
+        	    if (categoryRides.isEmpty()) {
                     sb.append("Aucun ride publié dans votre catégorie.\n");
                 } else {
                     for (int i = 0; i < categoryRides.size(); i++) {
@@ -73,7 +66,11 @@ public class ManagerAvailability extends JFrame {
                             r.getAvailableBikeSpotNumber(), r.getTotalBikeSpotNumber()));
                         sb.append(String.format("   Inscrits       : %d passager(s) + %d vélo(s)\n", 
                             r.getNeededSeatNumber(), r.getNeededBikeSpotNumber()));
-                        sb.append(String.format("   Conducteurs    : %s\n", r.checkDriverNeeds()));
+                        int missingDrivers = r.getMissingDriversCount();
+                        String driverStatus = missingDrivers > 0
+                            ? "Besoin de " + missingDrivers + " conducteur(s)"
+                            : "Tous les véhicules ont un conducteur";
+                        sb.append(String.format("   Conducteurs    : %s\n", driverStatus));
                         sb.append("   " + "─".repeat(70) + "\n");
                     }
                 }

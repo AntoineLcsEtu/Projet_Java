@@ -39,11 +39,9 @@ public class MemberReserveRide extends JFrame {
         ridesPanel.setBackground(new Color(248, 249, 250));
 
         try {
-            List<Ride> availableRides = member.getAvailableRides();
-            
-            availableRides.removeIf(ride -> !ride.getStartDate().after(new Date()));
-            
-            if (availableRides.isEmpty()) {
+        	List<Ride> availableRides = member.getAvailableRides();
+
+        	if (availableRides.isEmpty()) {
                 JLabel noRides = new JLabel("Aucun ride disponible pour le moment.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
@@ -81,7 +79,7 @@ public class MemberReserveRide extends JFrame {
         infoPanel.add(new JLabel("Lieu: " + ride.getStartPlace()));
         infoPanel.add(new JLabel("Date: " + ride.getStartDate()));
 
-        boolean canAfford = member.getBalance() >= ride.getFee();
+        boolean canAfford = member.canAfford(ride.getFee());
         Color feeColor = canAfford ? Color.BLACK : Color.RED;
 
         JPanel availPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -106,7 +104,7 @@ public class MemberReserveRide extends JFrame {
     }
 
     private void showReservationDialog(Ride ride) {
-        if (member.getBalance() < ride.getFee()) {
+    	if (!member.canAfford(ride.getFee())) {
             JOptionPane.showMessageDialog(this, 
                 "<html><center><b>Solde insuffisant !</b><br><br>" +
                 "Solde actuel : <b>" + String.format("%.2f", member.getBalance()) + " €</b><br>" +

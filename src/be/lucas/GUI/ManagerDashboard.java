@@ -19,6 +19,13 @@ public class ManagerDashboard extends JFrame {
         setSize(700, 500);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
+        
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                LogoutHandler.logout(ManagerDashboard.this);
+            }
+        });
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));

@@ -5,7 +5,7 @@ import javax.swing.*;
 
 import be.lucas.Model.Manager;
 import be.lucas.Model.Ride;
-
+import be.lucas.Model.Vehicle;
 import java.awt.*;
 
 public class ManagerCalculateFee extends JFrame {
@@ -70,13 +70,13 @@ public class ManagerCalculateFee extends JFrame {
                 double total = ride.getFee();
 
                 String message = String.format(
-                    "<html><h2>Prix calculé pour le trajet n°%d</h2>" +
-                    "<b>Passagers inscrits :</b> %d × 5,00 € = %.2f €<br>" +
-                    "<b>Vélos inscrits :</b> %d × 2,50 € = %.2f €<br><br>" +
-                    "<h3>Total à facturer : %.2f €</h3></html>",
-                    rideId, passengers, passengers * 5.0, bikes, bikes * 2.5, total
-                );
-
+                	    "<html><h2>Prix calculé pour le trajet n°%d</h2>" +
+                	    "<b>Passagers inscrits :</b> %d × %.2f € = %.2f €<br>" +
+                	    "<b>Vélos inscrits :</b> %d × %.2f € = %.2f €<br><br>" +
+                	    "<h3>Total à facturer : %.2f €</h3></html>",
+                	    rideId, passengers, Vehicle.SEAT_FEE, ride.getPassengerFeeTotal(),
+                	    bikes, Vehicle.BIKE_FEE, ride.getBikeFeeTotal(), total
+                	);
                 JOptionPane.showMessageDialog(
                     this,
                     message,

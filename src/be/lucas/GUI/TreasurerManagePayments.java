@@ -76,8 +76,8 @@ public class TreasurerManagePayments extends JFrame {
 
                 for (int i = 0; i < drivers.size(); i++) {
                     Member driver = drivers.get(i);
-                    double fee = driver.getDrivenVehicle().getSeatNumber() * 5.0 +
-                                 driver.getDrivenVehicle().getBikeSpotNumber() * 2.5;
+                    double fee = driver.getDrivenVehicle().calculateDriverFee();
+                    
                     totalToPay += fee;
 
                     preview.append(String.format("%2d. %s %s\n", i + 1, driver.getFirstName(), driver.getName()));
@@ -138,11 +138,33 @@ public class TreasurerManagePayments extends JFrame {
         logArea.setCaretPosition(logArea.getDocument().getLength());
 
         try {
-            Object[] result = treasurer.payDriver();
-            String logText = (String) result[0];
-            double totalPaid = (Double) result[1];
+        	Object[] result = treasurer.payDriver();
+        	@SuppressWarnings("unchecked")
+        	List<Member> paidDrivers = (List<Member>) result[0];
+        	@SuppressWarnings("unchecked")
+        	List<Member> failedDrivers = (List<Member>) result[1];
+        	double totalPaid = (Double) result[2];
 
-            logArea.setText(logText);
+        	StringBuilder log = new StringBuilder();
+        	if (paidDrivers.isEmpty() && failedDrivers.isEmpty()) {
+        	    log.append("Aucun conducteur à payer (aucun ride terminé).\n");
+        	} else {
+        	    for (Member driver : paidDrivers) {
+        	        double fee = driver.getDrivenVehicle().calculateDriverFee();
+        	        log.append(String.format("✓ %s %s : +%.2f € (sièges: %d, vélo: %d)\n",
+        	                driver.getFirstName(), driver.getName(), fee,
+        	                driver.getDrivenVehicle().getSeatNumber(),
+        	                driver.getDrivenVehicle().getBikeSpotNumber()));
+        	    }
+        	    for (Member driver : failedDrivers) {
+        	        log.append(String.format("✗ ÉCHEC pour %s %s\n", driver.getFirstName(), driver.getName()));
+        	    }
+        	    log.append("\n").append("═".repeat(50)).append("\n");
+        	    log.append(String.format("RÉSUMÉ : %d conducteur(s) payé(s) | Total : %.2f €\n", paidDrivers.size(), totalPaid));
+        	}
+
+        	String logText = log.toString();
+        	logArea.setText(logText);
 
             payButton.setText("PAIEMENT EFFECTUÉ ");
             payButton.setBackground(new Color(0, 153, 76));

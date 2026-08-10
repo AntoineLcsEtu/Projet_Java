@@ -27,13 +27,8 @@ public class TreasurerDAO extends DAO<Treasurer> {
     }
 
     @Override
-    public Treasurer find(int id) {
-        try {
-            return getTreasurerByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Treasurer find(int id) throws SQLException {
+        return getTreasurerByPersonId(id);
     }
 
 	
@@ -41,7 +36,7 @@ public class TreasurerDAO extends DAO<Treasurer> {
         String sql = """
             SELECT p.*, t.TreasurerID
             FROM Person p
-            JOIN Treasurer t ON p.PersonID = t.PersonID
+            JOIN Treasurer t ON p.PersonID = t.TreasurerID
             WHERE p.PersonID = ?
             """;
 

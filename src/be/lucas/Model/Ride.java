@@ -2,6 +2,7 @@ package be.lucas.Model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import be.lucas.DAO.InscriptionDAO;
 import be.lucas.DAO.RideDAO;
@@ -67,11 +68,9 @@ public class Ride {
         return inscriptions.stream().filter(Inscription::isBike).mapToInt(r -> 1).sum();
     }
 
-    public String checkDriverNeeds() {
-        long drivers = vehicles.stream().filter(v -> v.getDriver() != null).count();
-        return drivers < vehicles.size() 
-            ? "Besoin de " + (vehicles.size() - drivers) + " conducteur(s)" 
-            : "Tous les véhicules ont un conducteur";
+    public int getMissingDriversCount() {
+        long driversAssigned = vehicles.stream().filter(v -> v.getDriver() != null).count();
+        return (int) Math.max(0, vehicles.size() - driversAssigned);
     }
     
     public boolean isDriver(Member member) {
@@ -91,8 +90,59 @@ public class Ride {
     }
 
     public boolean registerMember(Member member, boolean isPassenger, boolean isBike) throws Exception {
-        InscriptionDAO dao = new InscriptionDAO();
-        return dao.registerMember(member, this.id, isPassenger, isBike);
+        InscriptionDAO inscriptionDAO = new InscriptionDAO();
+
+        if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
+            throw new Exception("Vous êtes déjà inscrit à ce ride.");
+        }
+
+        RideDAO rideDAO = new RideDAO();
+        Ride currentState = rideDAO.getRideWithDetails(this.id);
+        if (currentState == null) {
+            throw new Exception("Ride introuvable.");
+        }
+
+        Vehicle memberVehicle = null;
+        boolean isDriver = !isPassenger;
+
+        if (isDriver) {
+            memberVehicle = member.getVehicle();
+            if (memberVehicle == null) {
+                throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
+            }
+        }
+
+        boolean needsPassengerSeat = isPassenger;
+        boolean needsBikeSpot = isBike;
+
+        if (isDriver && memberVehicle != null) {
+            needsPassengerSeat = false;
+
+            if (isBike) {
+                int usedBikeSpotsInOwnVehicle = currentState.getUsedBikeSpotsInVehicle(memberVehicle);
+                if (usedBikeSpotsInOwnVehicle + 1 > memberVehicle.getBikeSpotNumber()) {
+                    throw new Exception("Votre véhicule n'a plus de place pour un vélo.");
+                }
+                needsBikeSpot = false;
+            }
+        }
+
+        if (needsPassengerSeat && !currentState.hasAvailableSeat()) {
+            throw new Exception("Plus de places passager disponibles pour ce ride.");
+        }
+        if (needsBikeSpot && !currentState.hasAvailableBikeSpot()) {
+            throw new Exception("Plus de places vélo disponibles pour ce ride.");
+        }
+
+        double rideFee = currentState.getFee();
+
+        if (!member.canAfford(rideFee)) {
+            throw new Exception(InscriptionDAO.MSG_SOLDE_INSUFFISANT +
+                              " Solde actuel : " + String.format("%.2f", member.getBalance()) +
+                              " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
+        }
+
+        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee);
     }
 
     public boolean assignMemberVehicle(Member member) throws Exception {
@@ -140,5 +190,38 @@ public class Ride {
                 return false;
             })
             .count();
+    }
+    
+    public void calculateFee() {
+        this.fee = getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+    }
+    
+    public boolean hasAvailableSeat() {
+        return getAvailableSeatNumber() > 0;
+    }
+
+    public boolean hasAvailableBikeSpot() {
+        return getAvailableBikeSpotNumber() > 0;
+    }
+    
+    public double getPassengerFeeTotal() {
+        return getNeededSeatNumber() * Vehicle.SEAT_FEE;
+    }
+
+    public double getBikeFeeTotal() {
+        return getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Ride ride = (Ride) o;
+        return id == ride.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

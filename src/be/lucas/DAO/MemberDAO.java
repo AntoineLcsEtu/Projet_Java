@@ -30,20 +30,15 @@ public class MemberDAO extends DAO<Member> {
     }
 
     @Override
-    public Member find(int id) {
-        try {
-            return getMemberByPersonId(id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public Member find(int id) throws SQLException {
+        return getMemberByPersonId(id);
     }
 
     public Member getMemberByPersonId(int personId) throws SQLException {
         String sql = """
             SELECT p.*, m.MemberID, m.Balance, m.MembershipPaid
             FROM Person p
-            JOIN Member m ON p.PersonID = m.PersonID
+            JOIN Member m ON p.PersonID = m.MemberID
             WHERE p.PersonID = ?
             """;
 
@@ -100,7 +95,7 @@ public class MemberDAO extends DAO<Member> {
         String sql = """
             UPDATE Member 
             SET Balance = ?, MembershipPaid = ? 
-            WHERE PersonID = ?
+            WHERE MemberID = ?
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -119,7 +114,7 @@ public class MemberDAO extends DAO<Member> {
             SELECT COUNT(*) 
             FROM Member_Category mc
             JOIN Member m ON mc.MemberID = m.MemberID
-            WHERE m.PersonID = ?
+            WHERE m.MemberID = ?
             """;
 
         try (Connection conn = DBConnection.getConnection();
@@ -140,7 +135,7 @@ public class MemberDAO extends DAO<Member> {
                    m.Balance, m.MembershipPaid,
                    c.CategoryID
             FROM Person p
-            JOIN Member m ON p.PersonID = m.PersonID
+            JOIN Member m ON p.PersonID = m.MemberID
             LEFT JOIN Member_Category mc ON m.MemberID = mc.MemberID
             LEFT JOIN Category c ON mc.CategoryID = c.CategoryID
             ORDER BY p.Name, p.FirstName
@@ -180,29 +175,12 @@ public class MemberDAO extends DAO<Member> {
     }
     
     public boolean creditBalance(int personId, double amount) throws SQLException {
-        String sql = "UPDATE Member SET Balance = Balance + ? WHERE PersonID = ?";
+        String sql = "UPDATE Member SET Balance = Balance + ? WHERE MemberID = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, amount);
             ps.setInt(2, personId);
-            int rowsAffected = ps.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                String checkSql = "SELECT Balance FROM Member WHERE PersonID = ?";
-                try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
-                    checkPs.setInt(1, personId);
-                    ResultSet rs = checkPs.executeQuery();
-                    if (rs.next() && rs.getDouble("Balance") < 0) {
-                        String refundSql = "UPDATE Member SET Balance = 0 WHERE PersonID = ?";
-                        try (PreparedStatement refundPs = conn.prepareStatement(refundSql)) {
-                            refundPs.setInt(1, personId);
-                            refundPs.executeUpdate();
-                        }
-                        return false;
-                    }
-                }
-            }
-            return rowsAffected > 0;
+            return ps.executeUpdate() > 0;
         }
     }
 }

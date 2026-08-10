@@ -6,7 +6,7 @@ import java.sql.*;
 public class DBConnection {
 
     private static final String DB_PATH 
-    	= "database\\Club_Velo.accdb";
+    	= "database/Club_Velo_v2.accdb";
 
     public static Connection getConnection() throws SQLException {
         File dbFile = new File(DB_PATH);

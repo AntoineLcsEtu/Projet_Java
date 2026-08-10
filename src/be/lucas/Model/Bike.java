@@ -1,5 +1,7 @@
 package be.lucas.Model;
 
+import java.util.Objects;
+
 public class Bike {
     private int id;
     private double weight;
@@ -28,4 +30,17 @@ public class Bike {
     public void setVehicle(Vehicle vehicle) { this.vehicle = vehicle; }
     public Member getMember() { return member; }
     public void setMember(Member member) { this.member = member; }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Bike bike = (Bike) o;
+        return id == bike.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
