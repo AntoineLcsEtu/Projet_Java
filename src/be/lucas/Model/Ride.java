@@ -89,7 +89,7 @@ public class Ride {
         this.startPlace = startPlace;  
     }
 
-    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle) throws Exception {
+    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike) throws Exception {
         InscriptionDAO inscriptionDAO = new InscriptionDAO();
 
         if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
@@ -145,7 +145,14 @@ public class Ride {
                               " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
         }
 
-        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee);
+        Bike bikeToUse = null;
+        if (isBike && selectedBike != null) {
+            List<Bike> ownedBikes = member.getOwnedBikes();
+            boolean belongsToMember = ownedBikes.stream().anyMatch(b -> b.getId() == selectedBike.getId());
+            bikeToUse = belongsToMember ? selectedBike : null;
+        }
+
+        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee, bikeToUse);
     }
 
     public boolean assignMemberVehicle(Member member, Vehicle vehicle) throws Exception {

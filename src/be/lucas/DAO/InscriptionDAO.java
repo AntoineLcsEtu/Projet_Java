@@ -1,5 +1,6 @@
 package be.lucas.DAO;
 
+import be.lucas.Model.Bike;
 import be.lucas.Model.Member;
 import be.lucas.Model.Ride;
 import be.lucas.Model.Vehicle;
@@ -150,14 +151,14 @@ public class InscriptionDAO extends DAO<Inscription> {
     }
     
     void loadInscriptionsForRide(Ride ride) throws SQLException {
-    	String sql = """
-    		    SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
-    		           m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
-    		    FROM Inscription i
-    		    JOIN Member m ON i.MemberID = m.MemberID
-    		    JOIN Person p ON m.MemberID = p.PersonID
-    		    WHERE i.RideID = ?
-    		    """;
+        String sql = """
+            SELECT i.InscriptionID, i.MemberID, i.IsPassenger, i.IsBike, i.BikeID,
+                   m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password, m.Balance
+            FROM Inscription i
+            JOIN Member m ON i.MemberID = m.MemberID
+            JOIN Person p ON m.MemberID = p.PersonID
+            WHERE i.RideID = ?
+            """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -202,7 +203,7 @@ public class InscriptionDAO extends DAO<Inscription> {
         }
     }
 
-    public boolean saveRegistration(Member member, int rideId, boolean isPassenger, boolean isBike, double fee) throws Exception {
+    public boolean saveRegistration(Member member, int rideId, boolean isPassenger, boolean isBike, double fee, Bike selectedBike) throws Exception {
         String maxSql = "SELECT MAX(InscriptionID) AS MaxID FROM Inscription";
         int nextId = 1;
 
@@ -240,13 +241,20 @@ public class InscriptionDAO extends DAO<Inscription> {
             throw new Exception("Erreur lors de la mise à jour du solde.");
         }
 
-        String findBikeSql = "SELECT MIN(BikeID) AS AnyBikeID FROM Bike";
-        int placeholderBikeId = 0;
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(findBikeSql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                placeholderBikeId = rs.getInt("AnyBikeID");
+        boolean useRealBikeId = isBike && selectedBike != null;
+        int bikeIdToInsert;
+
+        if (useRealBikeId) {
+            bikeIdToInsert = selectedBike.getId();
+        } else {
+            String findBikeSql = "SELECT MIN(BikeID) AS AnyBikeID FROM Bike";
+            bikeIdToInsert = 0;
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(findBikeSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    bikeIdToInsert = rs.getInt("AnyBikeID");
+                }
             }
         }
 
@@ -262,7 +270,7 @@ public class InscriptionDAO extends DAO<Inscription> {
             ps.setInt(3, rideId);
             ps.setBoolean(4, isPassenger);
             ps.setBoolean(5, isBike);
-            ps.setInt(6, placeholderBikeId);
+            ps.setInt(6, bikeIdToInsert);
             boolean inscriptionAdded = ps.executeUpdate() > 0;
 
             if (!inscriptionAdded) {
@@ -271,13 +279,14 @@ public class InscriptionDAO extends DAO<Inscription> {
             }
         }
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("UPDATE Inscription SET BikeID = NULL WHERE InscriptionID = ?")) {
-            ps.setInt(1, nextId);
-            ps.executeUpdate();
+        if (!useRealBikeId) {
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement("UPDATE Inscription SET BikeID = NULL WHERE InscriptionID = ?")) {
+                ps.setInt(1, nextId);
+                ps.executeUpdate();
+            }
         }
 
         return true;
-        
     }
 }

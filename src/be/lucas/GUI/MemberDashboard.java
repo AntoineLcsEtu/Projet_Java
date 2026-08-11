@@ -52,12 +52,13 @@ public class MemberDashboard extends JFrame {
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(6, 1, 10, 12));
+        buttonPanel.setLayout(new GridLayout(7, 1, 10, 12));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(25, 60, 20, 60));
         buttonPanel.setBackground(Color.WHITE);
 
         JButton reserveButton = createDashboardButton("Réserver un trajet", new Color(0, 102, 204));
         JButton addVehicleButton = createDashboardButton("Ajouter un véhicule", new Color(0, 102, 204));
+        JButton addBikeButton = createDashboardButton("Ajouter un vélo", new Color(0, 102, 204));
         JButton offerVehicleButton = createDashboardButton("Proposer un véhicule", new Color(0, 102, 204));
         JButton payMembershipButton = createDashboardButton("Payer la cotisation", new Color(0, 102, 204));
         JButton availabilityButton = createDashboardButton("Vérifier les disponibilités", new Color(0, 102, 204));
@@ -65,6 +66,7 @@ public class MemberDashboard extends JFrame {
 
         reserveButton.addActionListener(e -> new MemberReserveRide(member).setVisible(true));
         addVehicleButton.addActionListener(e -> new MemberAddVehicle(member).setVisible(true));
+        addBikeButton.addActionListener(e -> new MemberAddBike(member).setVisible(true));
         offerVehicleButton.addActionListener(e -> new MemberOfferVehicle(member).setVisible(true));
         payMembershipButton.addActionListener(e -> new MemberPayMembership(member).setVisible(true));
         availabilityButton.addActionListener(e -> new MemberAvailability(member).setVisible(true));
@@ -72,6 +74,7 @@ public class MemberDashboard extends JFrame {
 
         buttonPanel.add(reserveButton);
         buttonPanel.add(addVehicleButton);
+        buttonPanel.add(addBikeButton);
         buttonPanel.add(offerVehicleButton);
         buttonPanel.add(payMembershipButton);
         buttonPanel.add(availabilityButton);

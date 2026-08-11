@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.lucas.DAO.BikeDAO;
 import be.lucas.DAO.InscriptionDAO;
 import be.lucas.DAO.MemberDAO;
 import be.lucas.DAO.RideDAO;
@@ -71,6 +72,21 @@ public class Member extends Person {
         return dao.create(vehicle);
     }
 
+    public List<Bike> getOwnedBikes() throws Exception {
+        BikeDAO dao = new BikeDAO();
+        List<Bike> bikes = dao.getBikesByMemberId(this.getId());
+        for (Bike b : bikes) {
+            b.setMember(this);
+        }
+        return bikes;
+    }
+
+    public boolean addBike(double weight, CategoryType type, double length) throws Exception {
+        Bike bike = new Bike(0, weight, type, length, this);
+        BikeDAO dao = new BikeDAO();
+        return dao.create(bike);
+    }
+
     public boolean assignVehicleToRide(Vehicle vehicle, Ride ride) throws Exception {
         RideDAO dao = new RideDAO();
         boolean success = dao.assignVehicleToRide(vehicle.getId(), ride.getId());
@@ -124,8 +140,8 @@ public class Member extends Person {
     }
 
 
-    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle) throws Exception {
-        return ride.registerMember(this, isPassenger, isBike, selectedVehicle);
+    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike) throws Exception {
+        return ride.registerMember(this, isPassenger, isBike, selectedVehicle, selectedBike);
     }
 
 

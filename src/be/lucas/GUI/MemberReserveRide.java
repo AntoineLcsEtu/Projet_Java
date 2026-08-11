@@ -1,5 +1,6 @@
 package be.lucas.GUI;
 
+import be.lucas.Model.Bike;
 import be.lucas.Model.Member;
 import be.lucas.Model.Ride;
 import be.lucas.Model.Vehicle;
@@ -149,6 +150,53 @@ public class MemberReserveRide extends JFrame {
         return ownedVehicles.get(0);
     }
 
+    private Bike chooseBike(List<Bike> ownedBikes) {
+        JPanel selectionPanel = new JPanel();
+        selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel instructionLabel = new JLabel("Vous avez plusieurs vélos enregistrés :");
+        instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectionPanel.add(instructionLabel);
+        selectionPanel.add(Box.createVerticalStrut(15));
+
+        ButtonGroup bikeGroup = new ButtonGroup();
+        JRadioButton[] radioButtons = new JRadioButton[ownedBikes.size()];
+
+        for (int i = 0; i < ownedBikes.size(); i++) {
+            Bike b = ownedBikes.get(i);
+            String typeLabel = b.getType() != null ? b.getType().name().replace("_", " ") : "Type inconnu";
+            String label = String.format(
+                "<html><b>Vélo #%d</b> — %s, %.1f kg, %.0f cm</html>",
+                b.getId(), typeLabel, b.getWeight(), b.getLength()
+            );
+            JRadioButton radio = new JRadioButton(label);
+            radio.setFont(new Font("Arial", Font.PLAIN, 13));
+            radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (i == 0) radio.setSelected(true);
+
+            bikeGroup.add(radio);
+            radioButtons[i] = radio;
+            selectionPanel.add(radio);
+            selectionPanel.add(Box.createVerticalStrut(8));
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this, selectionPanel, "Choisir un vélo",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) return null;
+
+        for (int i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].isSelected()) {
+                return ownedBikes.get(i);
+            }
+        }
+        return ownedBikes.get(0);
+    }
+
     private void showReservationDialog(Ride ride) {
     	if (!member.canAfford(ride.getFee())) {
             JOptionPane.showMessageDialog(this, 
@@ -222,9 +270,29 @@ public class MemberReserveRide extends JFrame {
                 }
             }
 
+            Bike selectedBike = null;
+            if (isBike) {
+                List<Bike> ownedBikes;
+                try {
+                    ownedBikes = member.getOwnedBikes();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (ownedBikes.size() > 1) {
+                    selectedBike = chooseBike(ownedBikes);
+                    if (selectedBike == null) {
+                        return;
+                    }
+                } else if (ownedBikes.size() == 1) {
+                    selectedBike = ownedBikes.get(0);
+                }
+            }
+
             try {
                 double balanceBefore = member.getBalance();
-                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle);
+                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle, selectedBike);
 
                 if (!success) {
                     String msg = isDriver ?
