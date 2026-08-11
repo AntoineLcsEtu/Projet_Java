@@ -124,13 +124,13 @@ public class Member extends Person {
     }
 
 
-    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike) throws Exception {
-        return ride.registerMember(this, isPassenger, isBike);
+    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle) throws Exception {
+        return ride.registerMember(this, isPassenger, isBike, selectedVehicle);
     }
 
 
-    public boolean offerVehicleForRide(Ride ride) throws Exception {
-        return ride.assignMemberVehicle(this);
+    public boolean offerVehicleForRide(Ride ride, Vehicle vehicle) throws Exception {
+        return ride.assignMemberVehicle(this, vehicle);
     }
     
     public boolean creditBalance(double amount) throws Exception {

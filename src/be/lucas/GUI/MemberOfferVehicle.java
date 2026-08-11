@@ -134,6 +134,28 @@ public class MemberOfferVehicle extends JFrame {
         	        }
         	    }
         	}
+
+            boolean alreadyDriver = ride.isDriver(member);
+            if (alreadyDriver) {
+                JOptionPane.showMessageDialog(this, "Vous êtes déjà conducteur sur ce ride !", "Déjà inscrit", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Proposer votre véhicule pour ce ride ?\n" +
+                            "Sièges: " + vehicle.getSeatNumber() + " | Vélo: " + vehicle.getBikeSpotNumber() + "\n" +
+                            "Autres véhicules seront aussi disponibles.",
+                    "Confirmer", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean success = member.assignVehicleToRide(vehicle, ride);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Véhicule ajouté au Ride ID " + ride.getId() + " !");
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Échec : déjà proposé ou erreur.");
+                }
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage());
         }

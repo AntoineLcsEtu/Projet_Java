@@ -89,7 +89,7 @@ public class Ride {
         this.startPlace = startPlace;  
     }
 
-    public boolean registerMember(Member member, boolean isPassenger, boolean isBike) throws Exception {
+    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle) throws Exception {
         InscriptionDAO inscriptionDAO = new InscriptionDAO();
 
         if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
@@ -110,7 +110,9 @@ public class Ride {
             if (ownedVehicles.isEmpty()) {
                 throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
             }
-            memberVehicle = ownedVehicles.get(0);
+            boolean belongsToMember = selectedVehicle != null &&
+                ownedVehicles.stream().anyMatch(v -> v.getId() == selectedVehicle.getId());
+            memberVehicle = belongsToMember ? selectedVehicle : ownedVehicles.get(0);
         }
 
         boolean needsPassengerSeat = isPassenger;
@@ -146,10 +148,8 @@ public class Ride {
         return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee);
     }
 
-    public boolean assignMemberVehicle(Member member) throws Exception {
-        List<Vehicle> ownedVehicles = member.getOwnedVehicles();
-        if (ownedVehicles.isEmpty()) return false;
-        Vehicle vehicle = ownedVehicles.get(0);
+    public boolean assignMemberVehicle(Member member, Vehicle vehicle) throws Exception {
+        if (vehicle == null) return false;
         return new RideDAO().assignVehicleToRide(vehicle.getId(), this.id);
     }
     

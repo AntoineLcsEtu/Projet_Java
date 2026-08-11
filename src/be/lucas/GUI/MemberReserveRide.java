@@ -2,10 +2,10 @@ package be.lucas.GUI;
 
 import be.lucas.Model.Member;
 import be.lucas.Model.Ride;
+import be.lucas.Model.Vehicle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Date;
 import java.util.List;
 
 public class MemberReserveRide extends JFrame {
@@ -103,6 +103,52 @@ public class MemberReserveRide extends JFrame {
         return button;
     }
 
+    private Vehicle chooseVehicle(List<Vehicle> ownedVehicles) {
+        JPanel selectionPanel = new JPanel();
+        selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel instructionLabel = new JLabel("Vous avez plusieurs véhicules enregistrés :");
+        instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectionPanel.add(instructionLabel);
+        selectionPanel.add(Box.createVerticalStrut(15));
+
+        ButtonGroup vehicleGroup = new ButtonGroup();
+        JRadioButton[] radioButtons = new JRadioButton[ownedVehicles.size()];
+
+        for (int i = 0; i < ownedVehicles.size(); i++) {
+            Vehicle v = ownedVehicles.get(i);
+            String label = String.format(
+                "<html><b>Véhicule #%d</b> — %d siège(s), %d place(s) vélo</html>",
+                v.getId(), v.getSeatNumber(), v.getBikeSpotNumber()
+            );
+            JRadioButton radio = new JRadioButton(label);
+            radio.setFont(new Font("Arial", Font.PLAIN, 13));
+            radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (i == 0) radio.setSelected(true);
+
+            vehicleGroup.add(radio);
+            radioButtons[i] = radio;
+            selectionPanel.add(radio);
+            selectionPanel.add(Box.createVerticalStrut(8));
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this, selectionPanel, "Choisir un véhicule",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) return null;
+
+        for (int i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].isSelected()) {
+                return ownedVehicles.get(i);
+            }
+        }
+        return ownedVehicles.get(0);
+    }
+
     private void showReservationDialog(Ride ride) {
     	if (!member.canAfford(ride.getFee())) {
             JOptionPane.showMessageDialog(this, 
@@ -156,9 +202,29 @@ public class MemberReserveRide extends JFrame {
                 return;
             }
 
+            Vehicle selectedVehicle = null;
+            if (isDriver) {
+                List<Vehicle> ownedVehicles;
+                try {
+                    ownedVehicles = member.getOwnedVehicles();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (ownedVehicles.size() > 1) {
+                    selectedVehicle = chooseVehicle(ownedVehicles);
+                    if (selectedVehicle == null) {
+                        return;
+                    }
+                } else if (ownedVehicles.size() == 1) {
+                    selectedVehicle = ownedVehicles.get(0);
+                }
+            }
+
             try {
                 double balanceBefore = member.getBalance();
-                boolean success = member.reserveRide(ride, isPassenger, isBike);
+                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle);
 
                 if (!success) {
                     String msg = isDriver ?
@@ -176,7 +242,7 @@ public class MemberReserveRide extends JFrame {
                 }
 
                 if (isDriver) {
-                    boolean vehicleOk = member.offerVehicleForRide(ride);
+                    boolean vehicleOk = member.offerVehicleForRide(ride, selectedVehicle);
                     if (!vehicleOk) {
                         JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de votre véhicule.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
