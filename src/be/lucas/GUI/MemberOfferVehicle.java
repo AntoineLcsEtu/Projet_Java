@@ -79,34 +79,61 @@ public class MemberOfferVehicle extends JFrame {
 
     private void offerVehicleForRide(Ride ride) {
         try {
-            Vehicle vehicle = member.getVehicle();
-            if (vehicle == null) {
-                JOptionPane.showMessageDialog(this, "Vous n'avez pas de véhicule enregistré.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        	List<Vehicle> ownedVehicles = member.getOwnedVehicles();
+        	if (ownedVehicles.isEmpty()) {
+        	    JOptionPane.showMessageDialog(this, "Vous n'avez pas de véhicule enregistré.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        	    return;
+        	}
 
-            boolean alreadyDriver = ride.isDriver(member);
+        	Vehicle vehicle;
+        	if (ownedVehicles.size() == 1) {
+        	    vehicle = ownedVehicles.get(0);
+        	} else {
+        	    JPanel selectionPanel = new JPanel();
+        	    selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        	    selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            if (alreadyDriver) {
-                JOptionPane.showMessageDialog(this, "Vous êtes déjà conducteur sur ce ride !", "Déjà inscrit", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
+        	    JLabel instructionLabel = new JLabel("Vous avez plusieurs véhicules enregistrés :");
+        	    instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        	    instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        	    selectionPanel.add(instructionLabel);
+        	    selectionPanel.add(Box.createVerticalStrut(15));
 
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Proposer votre véhicule pour ce ride ?\n" +
-                            "Sièges: " + vehicle.getSeatNumber() + " | Vélo: " + vehicle.getBikeSpotNumber() + "\n" +
-                            "Autres véhicules seront aussi disponibles.",
-                    "Confirmer", JOptionPane.YES_NO_OPTION);
+        	    ButtonGroup vehicleGroup = new ButtonGroup();
+        	    JRadioButton[] radioButtons = new JRadioButton[ownedVehicles.size()];
 
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean success = member.assignVehicleToRide(vehicle, ride);
-                if (success) {
-                    JOptionPane.showMessageDialog(this, "Véhicule ajouté au Ride ID " + ride.getId() + " !");
-                    dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Échec : déjà proposé ou erreur.");
-                }
-            }
+        	    for (int i = 0; i < ownedVehicles.size(); i++) {
+        	        Vehicle v = ownedVehicles.get(i);
+        	        String label = String.format(
+        	            "<html><b>Véhicule #%d</b> — %d siège(s), %d place(s) vélo</html>",
+        	            v.getId(), v.getSeatNumber(), v.getBikeSpotNumber()
+        	        );
+        	        JRadioButton radio = new JRadioButton(label);
+        	        radio.setFont(new Font("Arial", Font.PLAIN, 13));
+        	        radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+        	        if (i == 0) radio.setSelected(true);
+
+        	        vehicleGroup.add(radio);
+        	        radioButtons[i] = radio;
+        	        selectionPanel.add(radio);
+        	        selectionPanel.add(Box.createVerticalStrut(8));
+        	    }
+
+        	    int result = JOptionPane.showConfirmDialog(
+        	        this, selectionPanel, "Choisir un véhicule",
+        	        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        	    );
+
+        	    if (result != JOptionPane.OK_OPTION) return;
+
+        	    vehicle = ownedVehicles.get(0);
+        	    for (int i = 0; i < radioButtons.length; i++) {
+        	        if (radioButtons[i].isSelected()) {
+        	            vehicle = ownedVehicles.get(i);
+        	            break;
+        	        }
+        	    }
+        	}
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage());
         }

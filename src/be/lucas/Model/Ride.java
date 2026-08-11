@@ -106,10 +106,11 @@ public class Ride {
         boolean isDriver = !isPassenger;
 
         if (isDriver) {
-            memberVehicle = member.getVehicle();
-            if (memberVehicle == null) {
+            List<Vehicle> ownedVehicles = member.getOwnedVehicles();
+            if (ownedVehicles.isEmpty()) {
                 throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
             }
+            memberVehicle = ownedVehicles.get(0);
         }
 
         boolean needsPassengerSeat = isPassenger;
@@ -146,8 +147,9 @@ public class Ride {
     }
 
     public boolean assignMemberVehicle(Member member) throws Exception {
-        Vehicle vehicle = member.getVehicle();
-        if (vehicle == null) return false;
+        List<Vehicle> ownedVehicles = member.getOwnedVehicles();
+        if (ownedVehicles.isEmpty()) return false;
+        Vehicle vehicle = ownedVehicles.get(0);
         return new RideDAO().assignVehicleToRide(vehicle.getId(), this.id);
     }
     

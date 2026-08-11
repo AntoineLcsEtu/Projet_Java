@@ -54,11 +54,21 @@ public class Member extends Person {
     }
 
 
-    public Vehicle getVehicle() throws Exception {
+    public List<Vehicle> getOwnedVehicles() throws Exception {
         VehicleDAO dao = new VehicleDAO();
-        Vehicle vehicle = dao.getVehicleByDriverId(this.getId());
-        if (vehicle != null) vehicle.setDriver(this);
-        return vehicle;
+        List<Vehicle> vehicles = dao.getVehiclesByDriverId(this.getId());
+        for (Vehicle v : vehicles) {
+            v.setDriver(this);
+        }
+        return vehicles;
+    }
+
+    public boolean addVehicle(int seatNumber, int bikeSpotNumber) throws Exception {
+        Vehicle vehicle = new Vehicle(0, seatNumber, bikeSpotNumber);
+        vehicle.setDriver(this);
+
+        VehicleDAO dao = new VehicleDAO();
+        return dao.create(vehicle);
     }
 
     public boolean assignVehicleToRide(Vehicle vehicle, Ride ride) throws Exception {
