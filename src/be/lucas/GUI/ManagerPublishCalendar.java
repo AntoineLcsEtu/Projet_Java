@@ -128,7 +128,7 @@ public class ManagerPublishCalendar extends JFrame {
 
             Ride ride = new Ride(0, place, startDate, fee);
             
-            int generatedId = manager.publishRideWithDB(ride, category.getId());
+            int generatedId = manager.publishRideWithDB(ride);
 
             if (generatedId > 0) {
                 ride.setId(generatedId);

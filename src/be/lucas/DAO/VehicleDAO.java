@@ -82,7 +82,7 @@ public class VehicleDAO extends DAO<Vehicle> {
         return null;
     }
 
-    public List<Vehicle> getVehiclesByDriverId(int personId) throws SQLException {
+    public List<Vehicle> findVehiclesByDriverId(int personId) throws SQLException {
         List<Vehicle> vehicles = new ArrayList<>();
         String sql = "SELECT VehicleID, SeatNumber, BikeSpotNumber FROM Vehicle WHERE DriverID = ?";
         try (Connection conn = DBConnection.getConnection();

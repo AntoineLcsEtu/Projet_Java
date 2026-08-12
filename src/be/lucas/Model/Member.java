@@ -46,18 +46,18 @@ public class Member extends Person {
     
     public List<Ride> getReservedRides() throws Exception {
         InscriptionDAO dao = new InscriptionDAO();
-        return dao.getRidesByMemberId(this.getId());
+        return dao.findRidesByMemberId(this.getId());
     }
     
     public List<Ride> getEligibleRidesForVehicleOffer() throws Exception {
         RideDAO dao = new RideDAO();
-        return dao.getRidesForVehicleOffer(this.getId());
+        return dao.findRidesForVehicleOffer(this.getId());
     }
 
 
     public List<Vehicle> getOwnedVehicles() throws Exception {
         VehicleDAO dao = new VehicleDAO();
-        List<Vehicle> vehicles = dao.getVehiclesByDriverId(this.getId());
+        List<Vehicle> vehicles = dao.findVehiclesByDriverId(this.getId());
         for (Vehicle v : vehicles) {
             v.setDriver(this);
         }
@@ -74,7 +74,7 @@ public class Member extends Person {
 
     public List<Bike> getOwnedBikes() throws Exception {
         BikeDAO dao = new BikeDAO();
-        List<Bike> bikes = dao.getBikesByMemberId(this.getId());
+        List<Bike> bikes = dao.findBikesByMemberId(this.getId());
         for (Bike b : bikes) {
             b.setMember(this);
         }
@@ -128,13 +128,13 @@ public class Member extends Person {
 
     public int getCategoryCount() throws Exception {
         MemberDAO dao = new MemberDAO();
-        return dao.getCategoryCountForMember(getId());
+        return dao.findCategoryCountForMember(getId());
     }
     
 
     public List<Ride> getAvailableRides() throws Exception {
         RideDAO dao = new RideDAO();
-        List<Ride> rides = dao.getAvailableRidesForMember(getId());
+        List<Ride> rides = dao.findAvailableRidesForMember(getId());
         rides.removeIf(ride -> !ride.getStartDate().after(new Date()));
         return rides;
     }

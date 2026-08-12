@@ -75,7 +75,7 @@ public class BikeDAO extends DAO<Bike> {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                Member owner = new MemberDAO().getMemberByPersonId(rs.getInt("MemberID"));
+                Member owner = new MemberDAO().find(rs.getInt("MemberID"));
 
                 CategoryType type = null;
                 String typeStr = rs.getString("Type");
@@ -97,7 +97,7 @@ public class BikeDAO extends DAO<Bike> {
         return null;
     }
 
-    public List<Bike> getBikesByMemberId(int memberId) throws SQLException {
+    public List<Bike> findBikesByMemberId(int memberId) throws SQLException {
         List<Bike> bikes = new ArrayList<>();
         String sql = "SELECT BikeID, Weight, Type, Length FROM Bike WHERE MemberID = ?";
         try (Connection conn = DBConnection.getConnection();

@@ -31,9 +31,9 @@ public class PersonDAO extends DAO<Person> {
         if (role == null) return null;
 
         return switch (role) {
-            case "MEMBER"    -> new MemberDAO().getMemberByPersonId(id);
-            case "MANAGER"   -> new ManagerDAO().getManagerByPersonId(id);
-            case "TREASURER" -> new TreasurerDAO().getTreasurerByPersonId(id);
+            case "MEMBER"    -> new MemberDAO().find(id);
+            case "MANAGER"   -> new ManagerDAO().find(id);
+            case "TREASURER" -> new TreasurerDAO().find(id);
             default          -> null;
         };
     }

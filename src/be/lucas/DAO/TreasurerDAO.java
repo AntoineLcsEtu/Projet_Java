@@ -28,34 +28,29 @@ public class TreasurerDAO extends DAO<Treasurer> {
 
     @Override
     public Treasurer find(int id) throws SQLException {
-        return getTreasurerByPersonId(id);
-    }
+    	String sql = """
+                SELECT p.*, t.TreasurerID
+                FROM Person p
+                JOIN Treasurer t ON p.PersonID = t.TreasurerID
+                WHERE p.PersonID = ?
+                """;
 
-	
-    public Treasurer getTreasurerByPersonId(int personId) throws SQLException {
-        String sql = """
-            SELECT p.*, t.TreasurerID
-            FROM Person p
-            JOIN Treasurer t ON p.PersonID = t.TreasurerID
-            WHERE p.PersonID = ?
-            """;
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, id);
+                ResultSet rs = ps.executeQuery();
 
-            ps.setInt(1, personId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return new Treasurer(
-                    rs.getString("Name"),
-                    rs.getString("FirstName"),
-                    rs.getString("Phone"),
-                    rs.getInt("PersonID"),
-                    rs.getString("Password")
-                );
+                if (rs.next()) {
+                    return new Treasurer(
+                        rs.getString("Name"),
+                        rs.getString("FirstName"),
+                        rs.getString("Phone"),
+                        rs.getInt("PersonID"),
+                        rs.getString("Password")
+                    );
+                }
             }
-        }
-        return null;
+            return null;
     }
 }

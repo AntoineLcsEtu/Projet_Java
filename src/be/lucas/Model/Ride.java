@@ -97,7 +97,7 @@ public class Ride {
         }
 
         RideDAO rideDAO = new RideDAO();
-        Ride currentState = rideDAO.getRideWithDetails(this.id);
+        Ride currentState = rideDAO.find(this.id);
         if (currentState == null) {
             throw new Exception("Ride introuvable.");
         }
@@ -152,7 +152,9 @@ public class Ride {
             bikeToUse = belongsToMember ? selectedBike : null;
         }
 
-        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee, bikeToUse);
+        Inscription inscription = new Inscription(member, currentState, isPassenger, isBike);
+        inscription.setAssignedBike(bikeToUse);
+        return inscriptionDAO.create(inscription);
     }
 
     public boolean assignMemberVehicle(Member member, Vehicle vehicle) throws Exception {

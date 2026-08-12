@@ -28,42 +28,35 @@ public class ManagerDAO extends DAO<Manager> {
 
     @Override
     public Manager find(int id) throws SQLException {
-        return getManagerByPersonId(id);
-    }
+    	String sql = """
+                SELECT p.*, ma.ManagerID, ma.CategoryID
+                FROM Person p
+                JOIN Manager ma ON p.PersonID = ma.ManagerID
+                WHERE p.PersonID = ?
+                """;
 
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-   
-    public Manager getManagerByPersonId(int personId) throws SQLException {
-        String sql = """
-            SELECT p.*, ma.ManagerID, ma.CategoryID
-            FROM Person p
-            JOIN Manager ma ON p.PersonID = ma.ManagerID
-            WHERE p.PersonID = ?
-            """;
+                ps.setInt(1, id);
+                ResultSet rs = ps.executeQuery();
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (rs.next()) {
+                	Category category = null;
+                	int categoryId = rs.getInt("CategoryID");
+                	if (!rs.wasNull()) {
+                	    category = new CategoryDAO().find(categoryId);
+                	}
 
-            ps.setInt(1, personId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-            	Category category = null;
-            	int categoryId = rs.getInt("CategoryID");
-            	if (!rs.wasNull()) {
-            	    category = new CategoryDAO().getCategoryById(categoryId);
-            	}
-
-            	return new Manager(
-            	    rs.getString("Name"),
-            	    rs.getString("FirstName"),
-            	    rs.getString("Phone"),
-            	    rs.getInt("PersonID"),
-            	    rs.getString("Password"),
-            	    category
-            	);
+                	return new Manager(
+                	    rs.getString("Name"),
+                	    rs.getString("FirstName"),
+                	    rs.getString("Phone"),
+                	    rs.getInt("PersonID"),
+                	    rs.getString("Password"),
+                	    category
+                	);
+                }
             }
-        }
-        return null;
-    }
+            return null;    }
 }

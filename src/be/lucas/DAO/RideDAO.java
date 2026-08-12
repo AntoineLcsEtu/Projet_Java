@@ -9,10 +9,44 @@ import java.util.List;
 
 public class RideDAO extends DAO<Ride> {
 
-    @Override
-    public boolean create(Ride obj) {
-        return false;
-    }
+	@Override
+	public boolean create(Ride obj) {
+	    try {
+	        String maxSql = "SELECT COALESCE(MAX(RideID), 0) AS MaxID FROM Ride";
+	        int newId = 1;
+
+	        try (Connection conn = DBConnection.getConnection();
+	             PreparedStatement maxPs = conn.prepareStatement(maxSql);
+	             ResultSet rs = maxPs.executeQuery()) {
+	            if (rs.next()) {
+	                newId = rs.getInt("MaxID") + 1;
+	            }
+	        }
+
+	        String insertSql = """
+	            INSERT INTO Ride (RideID, StartPlace, StartDate, Fee, CalendarID)
+	            VALUES (?, ?, ?, ?, ?)
+	            """;
+
+	        try (Connection conn = DBConnection.getConnection();
+	             PreparedStatement ps = conn.prepareStatement(insertSql)) {
+
+	            ps.setInt(1, newId);
+	            ps.setString(2, obj.getStartPlace());
+	            ps.setTimestamp(3, new java.sql.Timestamp(obj.getStartDate().getTime()));
+	            ps.setDouble(4, obj.getFee());
+	            ps.setInt(5, obj.getCategoryId());
+
+	            if (ps.executeUpdate() > 0) {
+	                obj.setId(newId);
+	                return true;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
 
     @Override
     public boolean delete(Ride obj) {
@@ -26,10 +60,68 @@ public class RideDAO extends DAO<Ride> {
 
     @Override
     public Ride find(int id) throws SQLException {
-        return getRideWithDetails(id);
+    	String sql = """
+                SELECT r.*, v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
+                FROM Ride r
+                LEFT JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
+                LEFT JOIN Vehicle v ON rv.VehicleID = v.VehicleID
+                WHERE r.RideID = ?
+                """;
+
+            Ride ride = null;
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setInt(1, id);
+                ResultSet rs = ps.executeQuery();
+
+                while (rs.next()) {
+                    if (ride == null) {
+                        ride = new Ride(
+                            rs.getInt("RideID"),
+                            rs.getString("StartPlace"),
+                            rs.getTimestamp("StartDate"),
+                            rs.getDouble("Fee")
+                        );
+                        
+                        int categoryId = rs.getInt("CalendarID");
+                        if (!rs.wasNull()) {
+                            CategoryDAO categoryDAO = new CategoryDAO();
+                            Category category = categoryDAO.find(categoryId);
+                            if (category != null) {
+                                if (category.getCalendar() == null) {
+                                    category.setCalendar(new Calendar(categoryId, category));
+                                }
+                                ride.setCalendar(category.getCalendar());
+                            }
+                        }
+                        
+                        new InscriptionDAO().loadInscriptionsForRide(ride);
+                    }
+
+                    int vehicleId = rs.getInt("VehicleID");
+                    if (!rs.wasNull()) {
+                        Vehicle vehicle = new Vehicle(
+                            vehicleId,
+                            rs.getInt("SeatNumber"),
+                            rs.getInt("BikeSpotNumber")
+                        );
+                        
+                        int driverId = rs.getInt("DriverID");
+                        if (!rs.wasNull()) {
+                            MemberDAO memberDAO = new MemberDAO();
+                            Member driver = memberDAO.find(driverId);
+                            vehicle.setDriver(driver);
+                        }
+                        
+                        ride.addVehicle(vehicle);
+                    }
+                }
+            }
+            return ride;
     }
 
-    public List<Ride> getAllRides() throws SQLException {
+    public List<Ride> findAllRides() throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
         	    SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID,
@@ -61,7 +153,7 @@ public class RideDAO extends DAO<Ride> {
                     int categoryId = rs.getInt("CategoryID");
                     if (!rs.wasNull()) {
                         CategoryDAO categoryDAO = new CategoryDAO();
-                        Category category = categoryDAO.getCategoryById(categoryId);
+                        Category category = categoryDAO.find(categoryId);
                         if (category != null) {
                             if (category.getCalendar() == null) {
                                 category.setCalendar(new Calendar(categoryId, category));
@@ -86,7 +178,7 @@ public class RideDAO extends DAO<Ride> {
                     int driverId = rs.getInt("DriverID");
                     if (!rs.wasNull()) {
                         MemberDAO memberDAO = new MemberDAO();
-                        Member driver = memberDAO.getMemberByPersonId(driverId);
+                        Member driver = memberDAO.find(driverId);
                         vehicle.setDriver(driver);
                     }
                     
@@ -98,70 +190,7 @@ public class RideDAO extends DAO<Ride> {
     }
     
     
-    public Ride getRideWithDetails(int rideId) throws SQLException {
-        String sql = """
-            SELECT r.*, v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
-            FROM Ride r
-            LEFT JOIN Ride_Vehicle rv ON r.RideID = rv.RideID
-            LEFT JOIN Vehicle v ON rv.VehicleID = v.VehicleID
-            WHERE r.RideID = ?
-            """;
-
-        Ride ride = null;
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, rideId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                if (ride == null) {
-                    ride = new Ride(
-                        rs.getInt("RideID"),
-                        rs.getString("StartPlace"),
-                        rs.getTimestamp("StartDate"),
-                        rs.getDouble("Fee")
-                    );
-                    
-                    int categoryId = rs.getInt("CalendarID");
-                    if (!rs.wasNull()) {
-                        CategoryDAO categoryDAO = new CategoryDAO();
-                        Category category = categoryDAO.getCategoryById(categoryId);
-                        if (category != null) {
-                            if (category.getCalendar() == null) {
-                                category.setCalendar(new Calendar(categoryId, category));
-                            }
-                            ride.setCalendar(category.getCalendar());
-                        }
-                    }
-                    
-                    new InscriptionDAO().loadInscriptionsForRide(ride);
-                }
-
-                int vehicleId = rs.getInt("VehicleID");
-                if (!rs.wasNull()) {
-                    Vehicle vehicle = new Vehicle(
-                        vehicleId,
-                        rs.getInt("SeatNumber"),
-                        rs.getInt("BikeSpotNumber")
-                    );
-                    
-                    int driverId = rs.getInt("DriverID");
-                    if (!rs.wasNull()) {
-                        MemberDAO memberDAO = new MemberDAO();
-                        Member driver = memberDAO.getMemberByPersonId(driverId);
-                        vehicle.setDriver(driver);
-                    }
-                    
-                    ride.addVehicle(vehicle);
-                }
-            }
-        }
-        return ride;
-    }
-    
-    
-    public List<Ride> getAvailableRidesForMember(int personId) throws SQLException {
+    public List<Ride> findAvailableRidesForMember(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
             SELECT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID
@@ -191,7 +220,7 @@ public class RideDAO extends DAO<Ride> {
                 int categoryId = rs.getInt("CategoryID");
                 if (!rs.wasNull()) {
                     CategoryDAO categoryDAO = new CategoryDAO();
-                    Category category = categoryDAO.getCategoryById(categoryId);
+                    Category category = categoryDAO.find(categoryId);
                     if (category != null) {
                         if (category.getCalendar() == null) {
                             category.setCalendar(new Calendar(categoryId, category));
@@ -233,7 +262,7 @@ public class RideDAO extends DAO<Ride> {
                 int driverId = rs.getInt("DriverID");
                 if (!rs.wasNull()) {
                     MemberDAO memberDAO = new MemberDAO();
-                    Member driver = memberDAO.getMemberByPersonId(driverId);
+                    Member driver = memberDAO.find(driverId);
                     vehicle.setDriver(driver);
                 }
                 
@@ -242,7 +271,7 @@ public class RideDAO extends DAO<Ride> {
         }
     }
     
-    public List<Ride> getRidesForVehicleOffer(int personId) throws SQLException {
+    public List<Ride> findRidesForVehicleOffer(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
     	    SELECT DISTINCT r.RideID, r.StartPlace, r.StartDate, r.Fee, r.CalendarID AS CategoryID
@@ -278,7 +307,7 @@ public class RideDAO extends DAO<Ride> {
                 int categoryId = rs.getInt("CategoryID");
                 if (!rs.wasNull()) {
                     CategoryDAO categoryDAO = new CategoryDAO();
-                    Category category = categoryDAO.getCategoryById(categoryId);
+                    Category category = categoryDAO.find(categoryId);
                     if (category != null) {
                         if (category.getCalendar() == null) {
                             category.setCalendar(new Calendar(categoryId, category));
@@ -314,7 +343,7 @@ public class RideDAO extends DAO<Ride> {
         }
     }
     
-    public List<Member> getDriversFromCompletedRides() throws SQLException {
+    public List<Member> findDriversFromCompletedRides() throws SQLException {
         List<Member> drivers = new ArrayList<>();
         String sql = """
         	    SELECT DISTINCT m.MemberID AS PersonID, p.Name, p.FirstName, p.Phone, p.Password,
@@ -355,37 +384,5 @@ public class RideDAO extends DAO<Ride> {
     
     
     
-    public int insertRideManualId(Ride ride, int categoryId) throws SQLException {
-        String maxSql = "SELECT COALESCE(MAX(RideID), 0) AS MaxID FROM Ride";
-        int newId = 1; 
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement maxPs = conn.prepareStatement(maxSql);
-             ResultSet rs = maxPs.executeQuery()) {
-            if (rs.next()) {
-                newId = rs.getInt("MaxID") + 1;
-            }
-        }
-
-        String insertSql = """
-    	    INSERT INTO Ride (RideID, StartPlace, StartDate, Fee, CalendarID)
-    	    VALUES (?, ?, ?, ?, ?)
-    	    """;
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(insertSql)) {
-
-            ps.setInt(1, newId);
-            ps.setString(2, ride.getStartPlace());
-            ps.setTimestamp(3, new java.sql.Timestamp(ride.getStartDate().getTime()));
-            ps.setDouble(4, ride.getFee());
-            ps.setInt(5, categoryId);
-
-            if (ps.executeUpdate() > 0) {
-                ride.setId(newId);           
-                return newId;
-            }
-        }
-        return -1; 
-    }
+    
 }
