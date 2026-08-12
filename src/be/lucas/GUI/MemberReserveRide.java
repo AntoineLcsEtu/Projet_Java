@@ -251,8 +251,8 @@ public class MemberReserveRide extends JFrame {
             }
 
             Vehicle selectedVehicle = null;
+            List<Vehicle> ownedVehicles = null;
             if (isDriver) {
-                List<Vehicle> ownedVehicles;
                 try {
                     ownedVehicles = member.getOwnedVehicles();
                 } catch (Exception ex) {
@@ -271,8 +271,8 @@ public class MemberReserveRide extends JFrame {
             }
 
             Bike selectedBike = null;
+            List<Bike> ownedBikes = null;
             if (isBike) {
-                List<Bike> ownedBikes;
                 try {
                     ownedBikes = member.getOwnedBikes();
                 } catch (Exception ex) {
@@ -292,7 +292,7 @@ public class MemberReserveRide extends JFrame {
 
             try {
                 double balanceBefore = member.getBalance();
-                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle, selectedBike);
+                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle, selectedBike, ownedVehicles, ownedBikes);
 
                 if (!success) {
                     String msg = isDriver ?

@@ -38,8 +38,8 @@ public class Member extends Person {
         }
     }
 
-    public void validateMembership() throws Exception {
-        if (getCategoryCount() == 0) {
+    public void validateMembership(int categoryCount) {
+        if (categoryCount == 0) {
             throw new IllegalStateException("Un membre doit appartenir à au moins une catégorie avant de pouvoir payer sa cotisation.");
         }
     }
@@ -98,15 +98,15 @@ public class Member extends Person {
     }
 
 
-    public boolean canPayMembership() throws Exception {
-        double totalFee = calculateMembershipFee();
+    public boolean canPayMembership(int categoryCount) {
+        double totalFee = calculateMembershipFee(categoryCount);
         return getBalance() >= totalFee;
     }
 
-    public boolean payMembership() throws Exception {
-        validateMembership();
+    public boolean payMembership(int categoryCount) throws Exception {
+        validateMembership(categoryCount);
 
-        double totalFee = calculateMembershipFee();
+        double totalFee = calculateMembershipFee(categoryCount);
         if (getBalance() < totalFee) return false;
 
         double newBalance = getBalance() - totalFee;
@@ -121,8 +121,7 @@ public class Member extends Person {
     }
     
     
-    public double calculateMembershipFee() throws Exception {
-        int categoryCount = getCategoryCount(); 
+    public double calculateMembershipFee(int categoryCount) {
         return 20.0 + categoryCount * 5.0;
     }
 
@@ -140,9 +139,10 @@ public class Member extends Person {
     }
 
 
-    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike) throws Exception {
-        return ride.registerMember(this, isPassenger, isBike, selectedVehicle, selectedBike);
-    }
+    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike,
+            List<Vehicle> ownedVehicles, List<Bike> ownedBikes) throws Exception {
+    	return ride.registerMember(this, isPassenger, isBike, selectedVehicle, selectedBike, ownedVehicles, ownedBikes);
+	}
 
 
     public boolean offerVehicleForRide(Ride ride, Vehicle vehicle) throws Exception {

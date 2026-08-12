@@ -11,10 +11,7 @@ public class Treasurer extends Person {
         super(name, firstName, phone, id, password);
     }
 
-    public List<Member> getUnpaidMembers() throws Exception {
-        MemberDAO memberDAO = new MemberDAO();
-        List<Member> members = memberDAO.findAllMembersWithCategories();
-
+    public List<Member> getUnpaidMembers(List<Member> members) {
         List<Member> unpaidMembers = new ArrayList<>();
         for (Member m : members) {
             if (!m.isMembershipPaid()) {

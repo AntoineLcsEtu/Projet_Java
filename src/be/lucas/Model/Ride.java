@@ -89,7 +89,8 @@ public class Ride {
         this.startPlace = startPlace;  
     }
 
-    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike) throws Exception {
+    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike,
+            List<Vehicle> ownedVehicles, List<Bike> ownedBikes) throws Exception {
         InscriptionDAO inscriptionDAO = new InscriptionDAO();
 
         if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
@@ -106,8 +107,7 @@ public class Ride {
         boolean isDriver = !isPassenger;
 
         if (isDriver) {
-            List<Vehicle> ownedVehicles = member.getOwnedVehicles();
-            if (ownedVehicles.isEmpty()) {
+            if (ownedVehicles == null || ownedVehicles.isEmpty()) {
                 throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
             }
             boolean belongsToMember = selectedVehicle != null &&
@@ -147,8 +147,8 @@ public class Ride {
 
         Bike bikeToUse = null;
         if (isBike && selectedBike != null) {
-            List<Bike> ownedBikes = member.getOwnedBikes();
-            boolean belongsToMember = ownedBikes.stream().anyMatch(b -> b.getId() == selectedBike.getId());
+            boolean belongsToMember = ownedBikes != null &&
+                ownedBikes.stream().anyMatch(b -> b.getId() == selectedBike.getId());
             bikeToUse = belongsToMember ? selectedBike : null;
         }
 

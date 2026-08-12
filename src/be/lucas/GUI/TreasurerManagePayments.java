@@ -173,12 +173,10 @@ public class TreasurerManagePayments extends JFrame {
             paymentAlreadyDone = true;
 
             JOptionPane.showMessageDialog(this,
-                "<html><h2>Paiement effectué avec succès !</h2>" +
-                "<b>" + String.format("%.2f €", totalPaid) + "</b> versés aux conducteurs.<br><br>" +
-                "Les soldes sont à jour.</html>",
-                "Succès", JOptionPane.INFORMATION_MESSAGE);
-
-            refreshPreview();
+        	    "<html><h2>Paiement effectué avec succès !</h2>" +
+        	    "<b>" + String.format("%.2f €", totalPaid) + "</b> versés aux conducteurs.<br><br>" +
+        	    "Les soldes sont à jour.</html>",
+        	    "Succès", JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
             logArea.append("\nERREUR FATALE : " + ex.getMessage() + "\n");
