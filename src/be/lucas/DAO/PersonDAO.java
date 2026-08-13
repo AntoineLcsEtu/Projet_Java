@@ -10,6 +10,16 @@ import java.sql.SQLException;
 
 public class PersonDAO extends DAO<Person> {
 
+    public static class AuthInfo {
+        public final String password;
+        public final String role;
+
+        public AuthInfo(String password, String role) {
+            this.password = password;
+            this.role = role;
+        }
+    }
+
     @Override
     public boolean create(Person obj) {
         return false;
@@ -27,35 +37,20 @@ public class PersonDAO extends DAO<Person> {
 
     @Override
     public Person find(int id) throws SQLException {
-        String role = getRole(id);
-        if (role == null) return null;
+        AuthInfo info = findAuthInfo(id);
+        if (info == null || info.role == null) return null;
 
-        return switch (role) {
+        return switch (info.role) {
             case "MEMBER"    -> new MemberDAO().find(id);
             case "MANAGER"   -> new ManagerDAO().find(id);
             case "TREASURER" -> new TreasurerDAO().find(id);
             default          -> null;
         };
     }
-	
-    public String getStoredPassword(int personId) throws SQLException {
-        String sql = "SELECT Password FROM Person WHERE PersonID = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, personId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("Password");
-            }
-        }
-        return null;
-    }
-
-    public String getRole(int personId) throws SQLException {
+    public AuthInfo findAuthInfo(int personId) throws SQLException {
         String sql = """
-            SELECT m.MemberID, ma.ManagerID, t.TreasurerID
+            SELECT p.Password, m.MemberID, ma.ManagerID, t.TreasurerID
             FROM Person p
             LEFT JOIN Member m ON p.PersonID = m.MemberID
             LEFT JOIN Manager ma ON p.PersonID = ma.ManagerID
@@ -70,12 +65,14 @@ public class PersonDAO extends DAO<Person> {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                if (rs.getObject("MemberID") != null) return "MEMBER";
-                if (rs.getObject("ManagerID") != null) return "MANAGER";
-                if (rs.getObject("TreasurerID") != null) return "TREASURER";
+                String password = rs.getString("Password");
+                String role = null;
+                if (rs.getObject("MemberID") != null) role = "MEMBER";
+                else if (rs.getObject("ManagerID") != null) role = "MANAGER";
+                else if (rs.getObject("TreasurerID") != null) role = "TREASURER";
+                return new AuthInfo(password, role);
             }
         }
         return null;
     }
-    
 }

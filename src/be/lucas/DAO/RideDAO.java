@@ -87,19 +87,14 @@ public class RideDAO extends DAO<Ride> {
                             rs.getTimestamp("StartDate"),
                             rs.getDouble("Fee")
                         );
-                        
+
+                        // Ici la requête fait SELECT r.* (pas d'alias), donc la colonne
+                        // s'appelle bien CalendarID dans le ResultSet.
                         int categoryId = rs.getInt("CalendarID");
                         if (!rs.wasNull()) {
-                            CategoryDAO categoryDAO = new CategoryDAO();
-                            Category category = categoryDAO.find(categoryId);
-                            if (category != null) {
-                                if (category.getCalendar() == null) {
-                                    category.setCalendar(new Calendar(categoryId, category));
-                                }
-                                ride.setCalendar(category.getCalendar());
-                            }
+                            loadCategoryForRide(ride, categoryId);
                         }
-                        
+
                         new InscriptionDAO().loadInscriptionsForRide(ride);
                     }
 
@@ -110,14 +105,14 @@ public class RideDAO extends DAO<Ride> {
                             rs.getInt("SeatNumber"),
                             rs.getInt("BikeSpotNumber")
                         );
-                        
+
                         int driverId = rs.getInt("DriverID");
                         if (!rs.wasNull()) {
                             MemberDAO memberDAO = new MemberDAO();
                             Member driver = memberDAO.find(driverId);
                             vehicle.setDriver(driver);
                         }
-                        
+
                         ride.addVehicle(vehicle);
                     }
                 }
@@ -153,20 +148,15 @@ public class RideDAO extends DAO<Ride> {
                         rs.getTimestamp("StartDate"),
                         rs.getDouble("Fee")
                     );
-                    
+
+                    // Ici la requête fait "r.CalendarID AS CategoryID",
+                    // donc la colonne dans le ResultSet s'appelle CategoryID.
                     int categoryId = rs.getInt("CategoryID");
                     if (!rs.wasNull()) {
-                        CategoryDAO categoryDAO = new CategoryDAO();
-                        Category category = categoryDAO.find(categoryId);
-                        if (category != null) {
-                            if (category.getCalendar() == null) {
-                                category.setCalendar(new Calendar(categoryId, category));
-                            }
-                            currentRide.setCalendar(category.getCalendar());
-                        }
+                        loadCategoryForRide(currentRide, categoryId);
                     }
-                    
-                    new InscriptionDAO().loadInscriptionsForRide(currentRide);                    
+
+                    new InscriptionDAO().loadInscriptionsForRide(currentRide);
                     rides.add(currentRide);
                     currentRideId = rideId;
                 }
@@ -178,22 +168,22 @@ public class RideDAO extends DAO<Ride> {
                         rs.getInt("SeatNumber"),
                         rs.getInt("BikeSpotNumber")
                     );
-                    
+
                     int driverId = rs.getInt("DriverID");
                     if (!rs.wasNull()) {
                         MemberDAO memberDAO = new MemberDAO();
                         Member driver = memberDAO.find(driverId);
                         vehicle.setDriver(driver);
                     }
-                    
+
                     currentRide.addVehicle(vehicle);
                 }
             }
         }
         return rides;
     }
-    
-    
+
+
     public List<Ride> findAvailableRidesForMember(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
@@ -220,28 +210,22 @@ public class RideDAO extends DAO<Ride> {
                     rs.getTimestamp("StartDate"),
                     rs.getDouble("Fee")
                 );
-                
+
+                // Ici aussi "r.CalendarID AS CategoryID" => colonne CategoryID.
                 int categoryId = rs.getInt("CategoryID");
                 if (!rs.wasNull()) {
-                    CategoryDAO categoryDAO = new CategoryDAO();
-                    Category category = categoryDAO.find(categoryId);
-                    if (category != null) {
-                        if (category.getCalendar() == null) {
-                            category.setCalendar(new Calendar(categoryId, category));
-                        }
-                        ride.setCalendar(category.getCalendar());
-                    }
+                    loadCategoryForRide(ride, categoryId);
                 }
-                
+
                 loadVehiclesForRide(ride);
                 new InscriptionDAO().loadInscriptionsForRide(ride);
-                
+
                 rides.add(ride);
             }
         }
         return rides;
     }
-    
+
     private void loadVehiclesForRide(Ride ride) throws SQLException {
         String sql = """
             SELECT v.VehicleID, v.SeatNumber, v.BikeSpotNumber, v.DriverID
@@ -262,19 +246,19 @@ public class RideDAO extends DAO<Ride> {
                     rs.getInt("SeatNumber"),
                     rs.getInt("BikeSpotNumber")
                 );
-                
+
                 int driverId = rs.getInt("DriverID");
                 if (!rs.wasNull()) {
                     MemberDAO memberDAO = new MemberDAO();
                     Member driver = memberDAO.find(driverId);
                     vehicle.setDriver(driver);
                 }
-                
+
                 ride.addVehicle(vehicle);
             }
         }
     }
-    
+
     public List<Ride> findRidesForVehicleOffer(int personId) throws SQLException {
         List<Ride> rides = new ArrayList<>();
         String sql = """
@@ -298,7 +282,7 @@ public class RideDAO extends DAO<Ride> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, personId);
             ps.setInt(2, personId);
-            ps.setInt(3, personId);  
+            ps.setInt(3, personId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Ride ride = new Ride(
@@ -307,28 +291,22 @@ public class RideDAO extends DAO<Ride> {
                     rs.getTimestamp("StartDate"),
                     rs.getDouble("Fee")
                 );
-                
+
+                // Ici aussi "r.CalendarID AS CategoryID" => colonne CategoryID.
                 int categoryId = rs.getInt("CategoryID");
                 if (!rs.wasNull()) {
-                    CategoryDAO categoryDAO = new CategoryDAO();
-                    Category category = categoryDAO.find(categoryId);
-                    if (category != null) {
-                        if (category.getCalendar() == null) {
-                            category.setCalendar(new Calendar(categoryId, category));
-                        }
-                        ride.setCalendar(category.getCalendar());
-                    }
+                    loadCategoryForRide(ride, categoryId);
                 }
-                
+
                 loadVehiclesForRide(ride);
                 new InscriptionDAO().loadInscriptionsForRide(ride);
-                
+
                 rides.add(ride);
             }
         }
         return rides;
     }
-    
+
     public boolean assignVehicleToRide(int vehicleId, int rideId) throws SQLException {
         String checkSql = "SELECT 1 FROM Ride_Vehicle WHERE RideID = ? AND VehicleID = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -346,7 +324,7 @@ public class RideDAO extends DAO<Ride> {
             return ps.executeUpdate() > 0;
         }
     }
-    
+
     public List<Member> findDriversFromCompletedRides() throws SQLException {
         List<Member> drivers = new ArrayList<>();
         String sql = """
@@ -385,8 +363,17 @@ public class RideDAO extends DAO<Ride> {
         }
         return drivers;
     }
-    
-    
-    
-    
+
+    private void loadCategoryForRide(Ride ride, int categoryId) throws SQLException {
+        CategoryDAO categoryDAO = new CategoryDAO();
+        Category category = categoryDAO.find(categoryId);
+        if (category != null) {
+            if (category.getCalendar() == null) {
+                category.setCalendar(new Calendar(categoryId, category));
+            }
+            ride.setCalendar(category.getCalendar());
+        }
+    }
+
+
 }
