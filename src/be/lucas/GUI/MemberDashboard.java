@@ -9,7 +9,7 @@ public class MemberDashboard extends JFrame {
 
     public MemberDashboard(Member member) {  
         setTitle("Member Dashboard - " + member.getFirstName() + " " + member.getName());
-        setSize(700, 560);
+        setSize(700, 700);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
         setLocationRelativeTo(null);
 
@@ -52,33 +52,39 @@ public class MemberDashboard extends JFrame {
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(7, 1, 10, 12));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(25, 60, 20, 60));
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 60, 15, 60));
         buttonPanel.setBackground(Color.WHITE);
 
         JButton reserveButton = createDashboardButton("Réserver un trajet", new Color(0, 102, 204));
+        JButton availabilityButton = createDashboardButton("Vérifier les disponibilités", new Color(0, 102, 204));
         JButton addVehicleButton = createDashboardButton("Ajouter un véhicule", new Color(0, 102, 204));
         JButton addBikeButton = createDashboardButton("Ajouter un vélo", new Color(0, 102, 204));
         JButton offerVehicleButton = createDashboardButton("Proposer un véhicule", new Color(0, 102, 204));
         JButton payMembershipButton = createDashboardButton("Payer la cotisation", new Color(0, 102, 204));
-        JButton availabilityButton = createDashboardButton("Vérifier les disponibilités", new Color(0, 102, 204));
         JButton logoutButton = createDashboardButton("Se déconnecter", Color.RED.darker());
 
         reserveButton.addActionListener(e -> new MemberReserveRide(member).setVisible(true));
+        availabilityButton.addActionListener(e -> new MemberAvailability(member).setVisible(true));
         addVehicleButton.addActionListener(e -> new MemberAddVehicle(member).setVisible(true));
         addBikeButton.addActionListener(e -> new MemberAddBike(member).setVisible(true));
         offerVehicleButton.addActionListener(e -> new MemberOfferVehicle(member).setVisible(true));
         payMembershipButton.addActionListener(e -> new MemberPayMembership(member).setVisible(true));
-        availabilityButton.addActionListener(e -> new MemberAvailability(member).setVisible(true));
         logoutButton.addActionListener(e -> LogoutHandler.logout(this));
 
-        buttonPanel.add(reserveButton);
-        buttonPanel.add(addVehicleButton);
-        buttonPanel.add(addBikeButton);
-        buttonPanel.add(offerVehicleButton);
-        buttonPanel.add(payMembershipButton);
-        buttonPanel.add(availabilityButton);
-        buttonPanel.add(logoutButton);
+        buttonPanel.add(createSection("Mes trajets", reserveButton, availabilityButton));
+        buttonPanel.add(Box.createVerticalStrut(15));
+        buttonPanel.add(createSection("Mon matériel", addVehicleButton, addBikeButton, offerVehicleButton));
+        buttonPanel.add(Box.createVerticalStrut(15));
+        buttonPanel.add(createSection("Mon compte", payMembershipButton));
+        buttonPanel.add(Box.createVerticalStrut(20));
+        buttonPanel.add(new JSeparator());
+        buttonPanel.add(Box.createVerticalStrut(15));
+
+        JPanel logoutWrap = new JPanel(new GridLayout(1, 1));
+        logoutWrap.setBackground(Color.WHITE);
+        logoutWrap.add(logoutButton);
+        buttonPanel.add(logoutWrap);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
         add(mainPanel);
@@ -96,5 +102,25 @@ public class MemberDashboard extends JFrame {
             BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
         return button;
+    }
+    
+    private JPanel createSection(String label, JButton... buttons) {
+        JPanel section = new JPanel(new BorderLayout(0, 6));
+        section.setBackground(Color.WHITE);
+        section.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel sectionLabel = new JLabel(label.toUpperCase(), SwingConstants.CENTER);
+        sectionLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        sectionLabel.setForeground(Color.GRAY);
+        section.add(sectionLabel, BorderLayout.NORTH);
+
+        JPanel grid = new JPanel(new GridLayout(buttons.length, 1, 0, 8));
+        grid.setBackground(Color.WHITE);
+        for (JButton b : buttons) {
+            grid.add(b);
+        }
+        section.add(grid, BorderLayout.CENTER);
+
+        return section;
     }
 }

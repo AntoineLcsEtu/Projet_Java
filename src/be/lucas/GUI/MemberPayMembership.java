@@ -90,6 +90,7 @@ public class MemberPayMembership extends JFrame {
         centerPanel.add(creditButton, gbc);
 
         creditButton.addActionListener(e -> creditBalanceFromUI());
+        amountField.addActionListener(e -> creditBalanceFromUI());
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
         add(mainPanel);

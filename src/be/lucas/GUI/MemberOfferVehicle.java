@@ -38,10 +38,9 @@ public class MemberOfferVehicle extends JFrame {
                 JLabel noRides = new JLabel("Aucun ride éligible. Vous êtes déjà conducteur partout où vous êtes inscrit.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
-                for (Ride ride : eligibleRides) {
-                    JButton rideButton = createRideButton(ride);
-                    ridesPanel.add(rideButton);
-                }
+            	for (Ride ride : eligibleRides) {
+            	    ridesPanel.add(createRidePanel(ride));
+            	}
             }
         } catch (Exception e) {
             JLabel error = new JLabel("Erreur : " + e.getMessage());
@@ -55,10 +54,13 @@ public class MemberOfferVehicle extends JFrame {
         add(mainPanel);
     }
 
-    private JButton createRideButton(Ride ride) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(650, 90));
+    private JPanel createRidePanel(Ride ride) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        row.setPreferredSize(new Dimension(650, 90));
 
         JPanel infoPanel = new JPanel(new GridLayout(4, 1));
         infoPanel.add(new JLabel("<html><b>Ride ID: " + ride.getId() + "</b></html>"));
@@ -70,11 +72,19 @@ public class MemberOfferVehicle extends JFrame {
         statusPanel.add(new JLabel("Sièges libres: " + ride.getAvailableSeatNumber()));
         statusPanel.add(new JLabel(" | Vélo libres: " + ride.getAvailableBikeSpotNumber()));
 
-        button.add(infoPanel, BorderLayout.CENTER);
-        button.add(statusPanel, BorderLayout.SOUTH);
+        JPanel centerBlock = new JPanel(new BorderLayout());
+        centerBlock.add(infoPanel, BorderLayout.CENTER);
+        centerBlock.add(statusPanel, BorderLayout.SOUTH);
+        row.add(centerBlock, BorderLayout.CENTER);
 
-        button.addActionListener(e -> offerVehicleForRide(ride));
-        return button;
+        JButton offerButton = new JButton("Proposer");
+        offerButton.setFont(new Font("Arial", Font.BOLD, 14));
+        offerButton.setFocusPainted(false);
+        offerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        offerButton.addActionListener(e -> offerVehicleForRide(ride));
+        row.add(offerButton, BorderLayout.EAST);
+
+        return row;
     }
 
     private void offerVehicleForRide(Ride ride) {

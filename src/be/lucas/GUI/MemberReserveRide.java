@@ -23,17 +23,22 @@ public class MemberReserveRide extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        JPanel headerPanel = new JPanel(new BorderLayout(0, 8));
+
         JLabel title = new JLabel("RIDES DISPONIBLES (NON RÉSERVÉS)", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setForeground(new Color(0, 102, 204));
-        mainPanel.add(title, BorderLayout.NORTH);
+        headerPanel.add(title, BorderLayout.NORTH);
 
-        JPanel balancePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JLabel balanceLabel = new JLabel("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
+        JLabel balanceLabel = new JLabel(
+            "Solde actuel : " + String.format("%.2f", member.getBalance()) + " €",
+            SwingConstants.CENTER
+        );
         balanceLabel.setFont(new Font("Arial", Font.BOLD, 14));
         balanceLabel.setForeground(Color.BLUE);
-        balancePanel.add(balanceLabel);
-        mainPanel.add(balancePanel, BorderLayout.NORTH);
+        headerPanel.add(balanceLabel, BorderLayout.SOUTH);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel ridesPanel = new JPanel();
         ridesPanel.setLayout(new GridLayout(0, 1, 10, 10));
@@ -46,10 +51,9 @@ public class MemberReserveRide extends JFrame {
                 JLabel noRides = new JLabel("Aucun ride disponible pour le moment.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
-                for (Ride ride : availableRides) {
-                    JButton rideButton = createRideButton(ride);
-                    ridesPanel.add(rideButton);
-                }
+            	for (Ride ride : availableRides) {
+            	    ridesPanel.add(createRidePanel(ride));
+            	}
             }
         } catch (Exception e) {
             JLabel error = new JLabel("Erreur : " + e.getMessage(), SwingConstants.CENTER);
@@ -63,20 +67,22 @@ public class MemberReserveRide extends JFrame {
         add(mainPanel);
     }
 
-    private JButton createRideButton(Ride ride) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(650, 100));
+    private JPanel createRidePanel(Ride ride) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        row.setPreferredSize(new Dimension(650, 100));
 
         JPanel infoPanel = new JPanel(new GridLayout(4, 1));
         infoPanel.add(new JLabel("<html><b>Ride ID: " + ride.getId() + "</b></html>"));
-        
+
         String categoryName = "Non spécifiée";
         if (ride.getCategory() != null && ride.getCategory().getType() != null) {
             categoryName = ride.getCategory().getType().name().replace("_", " ");
         }
         infoPanel.add(new JLabel("Catégorie: " + categoryName));
-        
         infoPanel.add(new JLabel("Lieu: " + ride.getStartPlace()));
         infoPanel.add(new JLabel("Date: " + ride.getStartDate()));
 
@@ -86,22 +92,32 @@ public class MemberReserveRide extends JFrame {
         JPanel availPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         availPanel.add(new JLabel("Sièges: " + ride.getAvailableSeatNumber()));
         availPanel.add(new JLabel(" | Vélo: " + ride.getAvailableBikeSpotNumber()));
-        availPanel.add(new JLabel(" | Frais: ", SwingConstants.CENTER));
+        availPanel.add(new JLabel(" | Frais: "));
         JLabel feeLabel = new JLabel(String.format("%.2f", ride.getFee()) + " €");
         feeLabel.setForeground(feeColor);
         availPanel.add(feeLabel);
-        
+
         if (!canAfford) {
-            JLabel warning = new JLabel(" (Solde insuffisant)", SwingConstants.CENTER);
+            JLabel warning = new JLabel(" (Solde insuffisant)");
             warning.setForeground(Color.RED);
             availPanel.add(warning);
         }
 
-        button.add(infoPanel, BorderLayout.CENTER);
-        button.add(availPanel, BorderLayout.SOUTH);
+        JPanel centerBlock = new JPanel(new BorderLayout());
+        centerBlock.add(infoPanel, BorderLayout.CENTER);
+        centerBlock.add(availPanel, BorderLayout.SOUTH);
+        row.add(centerBlock, BorderLayout.CENTER);
 
-        button.addActionListener(e -> showReservationDialog(ride));
-        return button;
+        JButton reserveButton = new JButton("Réserver");
+        reserveButton.setFont(new Font("Arial", Font.BOLD, 14));
+        reserveButton.setFocusPainted(false);
+        reserveButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        reserveButton.setEnabled(canAfford);
+        reserveButton.setToolTipText(canAfford ? "Réserver ce ride" : "Solde insuffisant pour ce ride");
+        reserveButton.addActionListener(e -> showReservationDialog(ride));
+        row.add(reserveButton, BorderLayout.EAST);
+
+        return row;
     }
 
     private Vehicle chooseVehicle(List<Vehicle> ownedVehicles) {
