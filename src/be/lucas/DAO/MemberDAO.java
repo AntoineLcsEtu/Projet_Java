@@ -136,7 +136,7 @@ public class MemberDAO extends DAO<Member> {
                 int categoryId = rs.getInt("CategoryID");
                 if (!rs.wasNull()) {
                     Category cat = new Category(categoryId, null, null);
-                    current.getCategories().add(cat);
+                    current.addCategory(cat);
                 }
             }
         }

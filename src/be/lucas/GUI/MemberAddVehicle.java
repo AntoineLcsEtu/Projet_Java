@@ -58,15 +58,10 @@ public class MemberAddVehicle extends JFrame {
             }
 
             try {
-                int seatNumber = Integer.parseInt(seatInput);
-                int bikeSpotNumber = Integer.parseInt(bikeSpotInput);
+            	int seatNumber = Integer.parseInt(seatInput);
+            	int bikeSpotNumber = Integer.parseInt(bikeSpotInput);
 
-                if (seatNumber < 0 || bikeSpotNumber < 0) {
-                    JOptionPane.showMessageDialog(this, "Les valeurs doivent être positives.", "Valeur invalide", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-
-                boolean success = member.addVehicle(seatNumber, bikeSpotNumber);
+            	boolean success = member.addVehicle(seatNumber, bikeSpotNumber);
 
                 if (success) {
                     JOptionPane.showMessageDialog(this, "Véhicule ajouté avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);

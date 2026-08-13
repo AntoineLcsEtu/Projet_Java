@@ -45,16 +45,11 @@ public class MemberAddBike extends JFrame {
 
         addButton.addActionListener(e -> {
             try {
-                double weight = Double.parseDouble(weightField.getText().trim().replace(",", "."));
-                double length = Double.parseDouble(lengthField.getText().trim().replace(",", "."));
-                CategoryType type = (CategoryType) typeCombo.getSelectedItem();
+            	double weight = Double.parseDouble(weightField.getText().trim().replace(",", "."));
+            	double length = Double.parseDouble(lengthField.getText().trim().replace(",", "."));
+            	CategoryType type = (CategoryType) typeCombo.getSelectedItem();
 
-                if (weight <= 0 || length <= 0) {
-                    JOptionPane.showMessageDialog(this, "Le poids et la longueur doivent être positifs.", "Erreur", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-
-                boolean success = member.addBike(weight, type, length);
+            	boolean success = member.addBike(weight, type, length);
                 if (success) {
                     JOptionPane.showMessageDialog(this, "Vélo ajouté avec succès !", "Succès", JOptionPane.INFORMATION_MESSAGE);
                     dispose();

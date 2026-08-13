@@ -18,8 +18,8 @@ public class Vehicle {
 
     public Vehicle(int id, int seatNumber, int bikeSpotNumber) {
         this.id = id;
-        this.seatNumber = seatNumber;
-        this.bikeSpotNumber = bikeSpotNumber;
+        setSeatNumber(seatNumber);
+        setBikeSpotNumber(bikeSpotNumber);
         this.passengers = new ArrayList<>();
         this.bikes = new ArrayList<>();
         this.rides = new ArrayList<>();
@@ -40,9 +40,19 @@ public class Vehicle {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public int getSeatNumber() { return seatNumber; }
-    public void setSeatNumber(int seatNumber) { this.seatNumber = seatNumber; }
+    public void setSeatNumber(int seatNumber) {
+        if (seatNumber < 0) {
+            throw new IllegalArgumentException("Le nombre de sièges doit être positif ou nul.");
+        }
+        this.seatNumber = seatNumber;
+    }
     public int getBikeSpotNumber() { return bikeSpotNumber; }
-    public void setBikeSpotNumber(int bikeSpotNumber) { this.bikeSpotNumber = bikeSpotNumber; }
+    public void setBikeSpotNumber(int bikeSpotNumber) {
+        if (bikeSpotNumber < 0) {
+            throw new IllegalArgumentException("Le nombre de places vélo doit être positif ou nul.");
+        }
+        this.bikeSpotNumber = bikeSpotNumber;
+    }
     public Member getDriver() { return driver; }
     public void setDriver(Member driver) { this.driver = driver; }
     public List<Member> getPassengers() { return passengers; }
