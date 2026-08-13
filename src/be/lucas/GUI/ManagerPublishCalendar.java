@@ -114,8 +114,7 @@ public class ManagerPublishCalendar extends JFrame {
             double fee;
             try {
                 fee = Double.parseDouble(feeField.getText().trim().replace(",", ".")); 
-                if (fee < 0) throw new NumberFormatException();
-            } catch (Exception ex) {
+            } catch (NumberFormatException ex) {
                 showError("Frais invalides. Utilisez un nombre positif.");
                 return;
             }

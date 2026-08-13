@@ -20,15 +20,15 @@ public class InscriptionDAO extends DAO<Inscription> {
 
     @Override
     public boolean create(Inscription obj) {
-        Member member = obj.getMember();
-        Ride ride = obj.getRide();
-        int rideId = ride.getId();
-        boolean isPassenger = obj.isPassenger();
-        boolean isBike = obj.isBike();
-        double fee = ride.getFee();
-        Bike selectedBike = obj.getAssignedBike();
-
         try {
+            Member member = obj.getMember();
+            Ride ride = obj.getRide();
+            int rideId = ride.getId();
+            boolean isPassenger = obj.isPassenger();
+            boolean isBike = obj.isBike();
+            double fee = ride.getFee();
+            Bike selectedBike = obj.getAssignedBike();
+
             String maxSql = "SELECT MAX(InscriptionID) AS MaxID FROM Inscription";
             int nextId = 1;
 
@@ -61,14 +61,9 @@ public class InscriptionDAO extends DAO<Inscription> {
                 ps.executeUpdate();
             }
 
-            boolean balanceUpdated;
-            try {
-                balanceUpdated = member.debitBalance(fee);
-            } catch (Exception e) {
-                throw new RuntimeException("Erreur lors de la mise à jour du solde.", e);
-            }
+            boolean balanceUpdated = member.debitBalance(fee);
             if (!balanceUpdated) {
-                throw new RuntimeException("Erreur lors de la mise à jour du solde.");
+                return false;
             }
 
             boolean useRealBikeId = isBike && selectedBike != null;
@@ -104,10 +99,8 @@ public class InscriptionDAO extends DAO<Inscription> {
                 boolean inscriptionAdded = ps.executeUpdate() > 0;
 
                 if (!inscriptionAdded) {
-                    try {
-                        member.creditBalance(fee);
-                    } catch (Exception ignored) { }
-                    throw new RuntimeException("Erreur lors de l'enregistrement de l'inscription.");
+                    member.creditBalance(fee);
+                    return false;
                 }
             }
 
@@ -122,8 +115,9 @@ public class InscriptionDAO extends DAO<Inscription> {
             obj.setId(nextId);
             return true;
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur base de données lors de l'inscription.", e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

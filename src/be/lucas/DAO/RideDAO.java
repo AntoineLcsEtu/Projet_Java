@@ -35,7 +35,11 @@ public class RideDAO extends DAO<Ride> {
 	            ps.setString(2, obj.getStartPlace());
 	            ps.setTimestamp(3, new java.sql.Timestamp(obj.getStartDate().getTime()));
 	            ps.setDouble(4, obj.getFee());
-	            ps.setInt(5, obj.getCategoryId());
+	            if (obj.getCategoryId() > 0) {
+	                ps.setInt(5, obj.getCategoryId());
+	            } else {
+	                ps.setNull(5, java.sql.Types.INTEGER);
+	            }
 
 	            if (ps.executeUpdate() > 0) {
 	                obj.setId(newId);

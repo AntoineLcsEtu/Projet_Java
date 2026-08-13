@@ -22,7 +22,7 @@ public class Ride {
         this.id = id;
         this.startPlace = startPlace;  
         this.startDate = startDate;
-        this.fee = fee;
+        setFee(fee);
         this.inscriptions = new ArrayList<>();
         this.vehicles = new ArrayList<>();
     }
@@ -166,7 +166,12 @@ public class Ride {
     public void setStartDate(Date startDate) { this.startDate = startDate; }
 
     public double getFee() { return fee; }
-    public void setFee(double fee) { this.fee = fee; }
+    public void setFee(double fee) {
+        if (fee < 0) {
+            throw new IllegalArgumentException("Les frais du ride doivent être positifs ou nuls.");
+        }
+        this.fee = fee;
+    }
 
     public List<Inscription> getRegistrations() { return inscriptions; }
     public List<Vehicle> getVehicles() { return vehicles; }
@@ -204,7 +209,7 @@ public class Ride {
     }
     
     public void calculateFee() {
-        this.fee = getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+        setFee(getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE);
     }
     
     public boolean hasAvailableSeat() {
