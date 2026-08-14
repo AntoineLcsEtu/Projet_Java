@@ -40,7 +40,7 @@ public class ManagerPublishCalendar extends JFrame {
         title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         formPanel.setBackground(new Color(248, 249, 250));
 
@@ -114,8 +114,7 @@ public class ManagerPublishCalendar extends JFrame {
             double fee;
             try {
                 fee = Double.parseDouble(feeField.getText().trim().replace(",", ".")); 
-                if (fee < 0) throw new NumberFormatException();
-            } catch (Exception ex) {
+            } catch (NumberFormatException ex) {
                 showError("Frais invalides. Utilisez un nombre positif.");
                 return;
             }
@@ -128,7 +127,7 @@ public class ManagerPublishCalendar extends JFrame {
 
             Ride ride = new Ride(0, place, startDate, fee);
             
-            int generatedId = manager.publishRideWithDB(ride, category.getId());
+            int generatedId = manager.publishRideWithDB(ride);
 
             if (generatedId > 0) {
                 ride.setId(generatedId);

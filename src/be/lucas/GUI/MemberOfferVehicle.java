@@ -38,10 +38,9 @@ public class MemberOfferVehicle extends JFrame {
                 JLabel noRides = new JLabel("Aucun ride éligible. Vous êtes déjà conducteur partout où vous êtes inscrit.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
-                for (Ride ride : eligibleRides) {
-                    JButton rideButton = createRideButton(ride);
-                    ridesPanel.add(rideButton);
-                }
+            	for (Ride ride : eligibleRides) {
+            	    ridesPanel.add(createRidePanel(ride));
+            	}
             }
         } catch (Exception e) {
             JLabel error = new JLabel("Erreur : " + e.getMessage());
@@ -55,10 +54,13 @@ public class MemberOfferVehicle extends JFrame {
         add(mainPanel);
     }
 
-    private JButton createRideButton(Ride ride) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(650, 90));
+    private JPanel createRidePanel(Ride ride) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        row.setPreferredSize(new Dimension(650, 90));
 
         JPanel infoPanel = new JPanel(new GridLayout(4, 1));
         infoPanel.add(new JLabel("<html><b>Ride ID: " + ride.getId() + "</b></html>"));
@@ -70,23 +72,80 @@ public class MemberOfferVehicle extends JFrame {
         statusPanel.add(new JLabel("Sièges libres: " + ride.getAvailableSeatNumber()));
         statusPanel.add(new JLabel(" | Vélo libres: " + ride.getAvailableBikeSpotNumber()));
 
-        button.add(infoPanel, BorderLayout.CENTER);
-        button.add(statusPanel, BorderLayout.SOUTH);
+        JPanel centerBlock = new JPanel(new BorderLayout());
+        centerBlock.add(infoPanel, BorderLayout.CENTER);
+        centerBlock.add(statusPanel, BorderLayout.SOUTH);
+        row.add(centerBlock, BorderLayout.CENTER);
 
-        button.addActionListener(e -> offerVehicleForRide(ride));
-        return button;
+        JButton offerButton = new JButton("Proposer");
+        offerButton.setFont(new Font("Arial", Font.BOLD, 14));
+        offerButton.setFocusPainted(false);
+        offerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        offerButton.addActionListener(e -> offerVehicleForRide(ride));
+        row.add(offerButton, BorderLayout.EAST);
+
+        return row;
     }
 
     private void offerVehicleForRide(Ride ride) {
         try {
-            Vehicle vehicle = member.getVehicle();
-            if (vehicle == null) {
-                JOptionPane.showMessageDialog(this, "Vous n'avez pas de véhicule enregistré.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        	List<Vehicle> ownedVehicles = member.getOwnedVehicles();
+        	if (ownedVehicles.isEmpty()) {
+        	    JOptionPane.showMessageDialog(this, "Vous n'avez pas de véhicule enregistré.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        	    return;
+        	}
+
+        	Vehicle vehicle;
+        	if (ownedVehicles.size() == 1) {
+        	    vehicle = ownedVehicles.get(0);
+        	} else {
+        	    JPanel selectionPanel = new JPanel();
+        	    selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        	    selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        	    JLabel instructionLabel = new JLabel("Vous avez plusieurs véhicules enregistrés :");
+        	    instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        	    instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        	    selectionPanel.add(instructionLabel);
+        	    selectionPanel.add(Box.createVerticalStrut(15));
+
+        	    ButtonGroup vehicleGroup = new ButtonGroup();
+        	    JRadioButton[] radioButtons = new JRadioButton[ownedVehicles.size()];
+
+        	    for (int i = 0; i < ownedVehicles.size(); i++) {
+        	        Vehicle v = ownedVehicles.get(i);
+        	        String label = String.format(
+        	            "<html><b>Véhicule #%d</b> — %d siège(s), %d place(s) vélo</html>",
+        	            v.getId(), v.getSeatNumber(), v.getBikeSpotNumber()
+        	        );
+        	        JRadioButton radio = new JRadioButton(label);
+        	        radio.setFont(new Font("Arial", Font.PLAIN, 13));
+        	        radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+        	        if (i == 0) radio.setSelected(true);
+
+        	        vehicleGroup.add(radio);
+        	        radioButtons[i] = radio;
+        	        selectionPanel.add(radio);
+        	        selectionPanel.add(Box.createVerticalStrut(8));
+        	    }
+
+        	    int result = JOptionPane.showConfirmDialog(
+        	        this, selectionPanel, "Choisir un véhicule",
+        	        JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        	    );
+
+        	    if (result != JOptionPane.OK_OPTION) return;
+
+        	    vehicle = ownedVehicles.get(0);
+        	    for (int i = 0; i < radioButtons.length; i++) {
+        	        if (radioButtons[i].isSelected()) {
+        	            vehicle = ownedVehicles.get(i);
+        	            break;
+        	        }
+        	    }
+        	}
 
             boolean alreadyDriver = ride.isDriver(member);
-
             if (alreadyDriver) {
                 JOptionPane.showMessageDialog(this, "Vous êtes déjà conducteur sur ce ride !", "Déjà inscrit", JOptionPane.INFORMATION_MESSAGE);
                 return;

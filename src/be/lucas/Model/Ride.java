@@ -22,7 +22,7 @@ public class Ride {
         this.id = id;
         this.startPlace = startPlace;  
         this.startDate = startDate;
-        this.fee = fee;
+        setFee(fee);
         this.inscriptions = new ArrayList<>();
         this.vehicles = new ArrayList<>();
     }
@@ -89,7 +89,8 @@ public class Ride {
         this.startPlace = startPlace;  
     }
 
-    public boolean registerMember(Member member, boolean isPassenger, boolean isBike) throws Exception {
+    public boolean registerMember(Member member, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike,
+            List<Vehicle> ownedVehicles, List<Bike> ownedBikes) throws Exception {
         InscriptionDAO inscriptionDAO = new InscriptionDAO();
 
         if (inscriptionDAO.isAlreadyRegistered(member.getId(), this.id)) {
@@ -97,7 +98,7 @@ public class Ride {
         }
 
         RideDAO rideDAO = new RideDAO();
-        Ride currentState = rideDAO.getRideWithDetails(this.id);
+        Ride currentState = rideDAO.find(this.id);
         if (currentState == null) {
             throw new Exception("Ride introuvable.");
         }
@@ -106,10 +107,12 @@ public class Ride {
         boolean isDriver = !isPassenger;
 
         if (isDriver) {
-            memberVehicle = member.getVehicle();
-            if (memberVehicle == null) {
+            if (ownedVehicles == null || ownedVehicles.isEmpty()) {
                 throw new Exception("Vous devez avoir un véhicule enregistré pour être conducteur.");
             }
+            boolean belongsToMember = selectedVehicle != null &&
+                ownedVehicles.stream().anyMatch(v -> v.getId() == selectedVehicle.getId());
+            memberVehicle = belongsToMember ? selectedVehicle : ownedVehicles.get(0);
         }
 
         boolean needsPassengerSeat = isPassenger;
@@ -142,11 +145,19 @@ public class Ride {
                               " €, Frais du ride : " + String.format("%.2f", rideFee) + " €");
         }
 
-        return inscriptionDAO.saveRegistration(member, this.id, isPassenger, isBike, rideFee);
+        Bike bikeToUse = null;
+        if (isBike && selectedBike != null) {
+            boolean belongsToMember = ownedBikes != null &&
+                ownedBikes.stream().anyMatch(b -> b.getId() == selectedBike.getId());
+            bikeToUse = belongsToMember ? selectedBike : null;
+        }
+
+        Inscription inscription = new Inscription(member, currentState, isPassenger, isBike);
+        inscription.setAssignedBike(bikeToUse);
+        return inscriptionDAO.create(inscription);
     }
 
-    public boolean assignMemberVehicle(Member member) throws Exception {
-        Vehicle vehicle = member.getVehicle();
+    public boolean assignMemberVehicle(Member member, Vehicle vehicle) throws Exception {
         if (vehicle == null) return false;
         return new RideDAO().assignVehicleToRide(vehicle.getId(), this.id);
     }
@@ -155,7 +166,12 @@ public class Ride {
     public void setStartDate(Date startDate) { this.startDate = startDate; }
 
     public double getFee() { return fee; }
-    public void setFee(double fee) { this.fee = fee; }
+    public void setFee(double fee) {
+        if (fee < 0) {
+            throw new IllegalArgumentException("Les frais du ride doivent être positifs ou nuls.");
+        }
+        this.fee = fee;
+    }
 
     public List<Inscription> getRegistrations() { return inscriptions; }
     public List<Vehicle> getVehicles() { return vehicles; }
@@ -193,7 +209,7 @@ public class Ride {
     }
     
     public void calculateFee() {
-        this.fee = getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE;
+        setFee(getNeededSeatNumber() * Vehicle.SEAT_FEE + getNeededBikeSpotNumber() * Vehicle.BIKE_FEE);
     }
     
     public boolean hasAvailableSeat() {

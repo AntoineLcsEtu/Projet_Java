@@ -7,6 +7,8 @@ import be.lucas.Model.Manager;
 import be.lucas.Model.Ride;
 import be.lucas.Model.Vehicle;
 import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.List;
 
 public class ManagerCalculateFee extends JFrame {
 
@@ -24,6 +26,9 @@ public class ManagerCalculateFee extends JFrame {
         initUI();
     }
 
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    private JComboBox<Ride> rideCombo;
+
     private void initUI() {
         JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
@@ -33,36 +38,59 @@ public class ManagerCalculateFee extends JFrame {
         title.setForeground(new Color(0, 90, 180));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        JPanel formPanel = new JPanel(new GridLayout(3, 2, 15, 15));
+        JPanel formPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         formPanel.setBorder(BorderFactory.createTitledBorder("Informations du trajet"));
 
-        formPanel.add(new JLabel("ID du trajet (Ride ID) :"));
-        JTextField rideIdField = new JTextField();
-        rideIdField.setFont(new Font("Arial", Font.PLAIN, 16));
-        formPanel.add(rideIdField);
+        formPanel.add(new JLabel("Trajet à facturer :"));
+
+        rideCombo = new JComboBox<>();
+        rideCombo.setFont(new Font("Arial", Font.PLAIN, 14));
+        rideCombo.setRenderer(new DefaultListCellRenderer() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Ride ride) {
+                    setText(String.format("#%d — %s — %s (%.2f €)",
+                            ride.getId(), ride.getStartPlace(), sdf.format(ride.getStartDate()), ride.getFee()));
+                }
+                return this;
+            }
+        });
 
         JButton calculateButton = new JButton("Calculer le prix");
         calculateButton.setFont(new Font("Arial", Font.BOLD, 16));
         calculateButton.setBackground(Color.WHITE);
         calculateButton.setForeground(new Color(0, 120, 215));
 
+        try {
+            List<Ride> rides = manager.getRidesInMyCategory();
+            if (rides.isEmpty()) {
+                rideCombo.setEnabled(false);
+                calculateButton.setEnabled(false);
+                formPanel.add(new JLabel("Aucun trajet publié dans votre catégorie."));
+            } else {
+                for (Ride r : rides) {
+                    rideCombo.addItem(r);
+                }
+                formPanel.add(rideCombo);
+            }
+        } catch (Exception ex) {
+            rideCombo.setEnabled(false);
+            calculateButton.setEnabled(false);
+            formPanel.add(new JLabel("Erreur de chargement : " + ex.getMessage()));
+            ex.printStackTrace();
+        }
+
         calculateButton.addActionListener(e -> {
-            String input = rideIdField.getText().trim();
-            if (input.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Veuillez entrer un ID de trajet.", "Champ vide", JOptionPane.WARNING_MESSAGE);
+            Ride ride = (Ride) rideCombo.getSelectedItem();
+            if (ride == null) {
+                JOptionPane.showMessageDialog(this, "Veuillez sélectionner un trajet.", "Aucune sélection", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             try {
-                int rideId = Integer.parseInt(input);
-
-                Ride ride = manager.getRideById(rideId);
-
-                if (ride == null) {
-                    JOptionPane.showMessageDialog(this, "Aucun trajet trouvé avec l'ID " + rideId, "Introuvable", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
                 manager.calculateRideFee(ride);
 
                 int passengers = ride.getNeededSeatNumber();
@@ -70,26 +98,20 @@ public class ManagerCalculateFee extends JFrame {
                 double total = ride.getFee();
 
                 String message = String.format(
-                	    "<html><h2>Prix calculé pour le trajet n°%d</h2>" +
-                	    "<b>Passagers inscrits :</b> %d × %.2f € = %.2f €<br>" +
-                	    "<b>Vélos inscrits :</b> %d × %.2f € = %.2f €<br><br>" +
-                	    "<h3>Total à facturer : %.2f €</h3></html>",
-                	    rideId, passengers, Vehicle.SEAT_FEE, ride.getPassengerFeeTotal(),
-                	    bikes, Vehicle.BIKE_FEE, ride.getBikeFeeTotal(), total
-                	);
-                JOptionPane.showMessageDialog(
-                    this,
-                    message,
-                    "Prix du trajet calculé",
-                    JOptionPane.INFORMATION_MESSAGE
+                        "<html><h2>Prix calculé pour le trajet n°%d</h2>" +
+                        "<b>Passagers inscrits :</b> %d × %.2f € = %.2f €<br>" +
+                        "<b>Vélos inscrits :</b> %d × %.2f € = %.2f €<br><br>" +
+                        "<h3>Total à facturer : %.2f €</h3></html>",
+                        ride.getId(), passengers, Vehicle.SEAT_FEE, ride.getPassengerFeeTotal(),
+                        bikes, Vehicle.BIKE_FEE, ride.getBikeFeeTotal(), total
                 );
+                JOptionPane.showMessageDialog(this, message, "Prix du trajet calculé", JOptionPane.INFORMATION_MESSAGE);
 
                 dispose();
 
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "L'ID doit être un nombre entier.", "Format invalide", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
         });
 

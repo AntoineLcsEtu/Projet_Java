@@ -30,10 +30,34 @@ public class ManagerDashboard extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        JPanel headerPanel = new JPanel(new BorderLayout(0, 8));
+
         JLabel title = new JLabel("TABLEAU DE BORD MANAGER", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setForeground(new Color(0, 102, 204));
-        mainPanel.add(title, BorderLayout.NORTH);
+        headerPanel.add(title, BorderLayout.NORTH);
+
+        String categoryName = manager.getCategory() != null && manager.getCategory().getType() != null
+            ? manager.getCategory().getType().name().replace("_", " ")
+            : "Aucune catégorie";
+
+        String rideCountText;
+        try {
+            int rideCount = manager.getRidesInMyCategory().size();
+            rideCountText = rideCount + " trajet(s) publié(s)";
+        } catch (Exception ex) {
+            rideCountText = "Trajets : indisponible";
+        }
+
+        JLabel infoLabel = new JLabel(
+            "Catégorie : " + categoryName + "  •  " + rideCountText,
+            SwingConstants.CENTER
+        );
+        infoLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        infoLabel.setForeground(Color.GRAY);
+        headerPanel.add(infoLabel, BorderLayout.SOUTH);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(4, 1, 10, 15));

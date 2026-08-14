@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.lucas.DAO.BikeDAO;
 import be.lucas.DAO.InscriptionDAO;
 import be.lucas.DAO.MemberDAO;
 import be.lucas.DAO.RideDAO;
@@ -37,28 +38,53 @@ public class Member extends Person {
         }
     }
 
-    public void validateMembership() throws Exception {
-        if (getCategoryCount() == 0) {
+    public void validateMembership(int categoryCount) {
+        if (categoryCount == 0) {
             throw new IllegalStateException("Un membre doit appartenir à au moins une catégorie avant de pouvoir payer sa cotisation.");
         }
     }
     
     public List<Ride> getReservedRides() throws Exception {
         InscriptionDAO dao = new InscriptionDAO();
-        return dao.getRidesByMemberId(this.getId());
+        return dao.findRidesByMemberId(this.getId());
     }
     
     public List<Ride> getEligibleRidesForVehicleOffer() throws Exception {
         RideDAO dao = new RideDAO();
-        return dao.getRidesForVehicleOffer(this.getId());
+        return dao.findRidesForVehicleOffer(this.getId());
     }
 
 
-    public Vehicle getVehicle() throws Exception {
+    public List<Vehicle> getOwnedVehicles() throws Exception {
         VehicleDAO dao = new VehicleDAO();
-        Vehicle vehicle = dao.getVehicleByDriverId(this.getId());
-        if (vehicle != null) vehicle.setDriver(this);
-        return vehicle;
+        List<Vehicle> vehicles = dao.findVehiclesByDriverId(this.getId());
+        for (Vehicle v : vehicles) {
+            v.setDriver(this);
+        }
+        return vehicles;
+    }
+
+    public boolean addVehicle(int seatNumber, int bikeSpotNumber) throws Exception {
+        Vehicle vehicle = new Vehicle(0, seatNumber, bikeSpotNumber);
+        vehicle.setDriver(this);
+
+        VehicleDAO dao = new VehicleDAO();
+        return dao.create(vehicle);
+    }
+
+    public List<Bike> getOwnedBikes() throws Exception {
+        BikeDAO dao = new BikeDAO();
+        List<Bike> bikes = dao.findBikesByMemberId(this.getId());
+        for (Bike b : bikes) {
+            b.setMember(this);
+        }
+        return bikes;
+    }
+
+    public boolean addBike(double weight, CategoryType type, double length) throws Exception {
+        Bike bike = new Bike(0, weight, type, length, this);
+        BikeDAO dao = new BikeDAO();
+        return dao.create(bike);
     }
 
     public boolean assignVehicleToRide(Vehicle vehicle, Ride ride) throws Exception {
@@ -72,15 +98,15 @@ public class Member extends Person {
     }
 
 
-    public boolean canPayMembership() throws Exception {
-        double totalFee = calculateMembershipFee();
+    public boolean canPayMembership(int categoryCount) {
+        double totalFee = calculateMembershipFee(categoryCount);
         return getBalance() >= totalFee;
     }
 
-    public boolean payMembership() throws Exception {
-        validateMembership();
+    public boolean payMembership(int categoryCount) throws Exception {
+        validateMembership(categoryCount);
 
-        double totalFee = calculateMembershipFee();
+        double totalFee = calculateMembershipFee(categoryCount);
         if (getBalance() < totalFee) return false;
 
         double newBalance = getBalance() - totalFee;
@@ -95,32 +121,32 @@ public class Member extends Person {
     }
     
     
-    public double calculateMembershipFee() throws Exception {
-        int categoryCount = getCategoryCount(); 
+    public double calculateMembershipFee(int categoryCount) {
         return 20.0 + categoryCount * 5.0;
     }
 
     public int getCategoryCount() throws Exception {
         MemberDAO dao = new MemberDAO();
-        return dao.getCategoryCountForMember(getId());
+        return dao.findCategoryCountForMember(getId());
     }
     
 
     public List<Ride> getAvailableRides() throws Exception {
         RideDAO dao = new RideDAO();
-        List<Ride> rides = dao.getAvailableRidesForMember(getId());
+        List<Ride> rides = dao.findAvailableRidesForMember(getId());
         rides.removeIf(ride -> !ride.getStartDate().after(new Date()));
         return rides;
     }
 
 
-    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike) throws Exception {
-        return ride.registerMember(this, isPassenger, isBike);
-    }
+    public boolean reserveRide(Ride ride, boolean isPassenger, boolean isBike, Vehicle selectedVehicle, Bike selectedBike,
+            List<Vehicle> ownedVehicles, List<Bike> ownedBikes) throws Exception {
+    	return ride.registerMember(this, isPassenger, isBike, selectedVehicle, selectedBike, ownedVehicles, ownedBikes);
+	}
 
 
-    public boolean offerVehicleForRide(Ride ride) throws Exception {
-        return ride.assignMemberVehicle(this);
+    public boolean offerVehicleForRide(Ride ride, Vehicle vehicle) throws Exception {
+        return ride.assignMemberVehicle(this, vehicle);
     }
     
     public boolean creditBalance(double amount) throws Exception {

@@ -11,10 +11,7 @@ public class Treasurer extends Person {
         super(name, firstName, phone, id, password);
     }
 
-    public List<Member> getUnpaidMembers() throws Exception {
-        MemberDAO memberDAO = new MemberDAO();
-        List<Member> members = memberDAO.getAllMembersWithCategories();
-
+    public List<Member> getUnpaidMembers(List<Member> members) {
         List<Member> unpaidMembers = new ArrayList<>();
         for (Member m : members) {
             if (!m.isMembershipPaid()) {
@@ -26,12 +23,12 @@ public class Treasurer extends Person {
 
     public List<Member> getDriversToPay() throws Exception {
         RideDAO rideDAO = new RideDAO();
-        return rideDAO.getDriversFromCompletedRides();
+        return rideDAO.findDriversFromCompletedRides();
     }
 
     public Object[] payDriver() throws Exception {
         RideDAO rideDAO = new RideDAO();
-        List<Member> drivers = rideDAO.getDriversFromCompletedRides();
+        List<Member> drivers = rideDAO.findDriversFromCompletedRides();
 
         List<Member> paidDrivers = new ArrayList<>();
         List<Member> failedDrivers = new ArrayList<>();
@@ -55,6 +52,6 @@ public class Treasurer extends Person {
 
     public List<Member> getMembershipReport() throws Exception {
         MemberDAO memberDAO = new MemberDAO();
-        return memberDAO.getAllMembersWithCategories();
+        return memberDAO.findAllMembersWithCategories();
     }
 }

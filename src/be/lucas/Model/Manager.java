@@ -22,9 +22,16 @@ public class Manager extends Person {
         }
     }
 
-    public int publishRideWithDB(Ride ride, int categoryId) throws SQLException {
+    public int publishRideWithDB(Ride ride) throws SQLException {
+        if (category != null) {
+            if (category.getCalendar() == null) {
+                category.setCalendar(new Calendar(category.getId(), category));
+            }
+            ride.setCalendar(category.getCalendar());
+        }
         RideDAO rideDAO = new RideDAO();
-        return rideDAO.insertRideManualId(ride, categoryId);
+        boolean success = rideDAO.create(ride);
+        return success ? ride.getId() : -1;
     }
     
     public void calculateRideFee(Ride ride) {
@@ -33,7 +40,7 @@ public class Manager extends Person {
     
     public List<Ride> getAllRides() throws Exception {
         RideDAO dao = new RideDAO();
-        return dao.getAllRides();
+        return dao.findAllRides();
     }
     
     public Ride getRideById(int rideId) throws Exception {

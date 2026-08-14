@@ -30,10 +30,6 @@ public class CategoryDAO extends DAO<Category> {
 
     @Override
     public Category find(int id) throws SQLException {
-        return getCategoryById(id);
-    }
-    
-    public Category getCategoryById(int categoryId) throws SQLException {
         String sql = """
             SELECT c.CategoryID, c.Type
             FROM Category c
@@ -43,11 +39,11 @@ public class CategoryDAO extends DAO<Category> {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, categoryId);
+            ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                int id = rs.getInt("CategoryID");
+                int categoryId = rs.getInt("CategoryID");
                 String typeStr = rs.getString("Type");
 
                 CategoryType type;
@@ -57,7 +53,7 @@ public class CategoryDAO extends DAO<Category> {
                     throw new SQLException("Type de catégorie inconnu : " + typeStr);
                 }
 
-                Category category = new Category(id, null, type);
+                Category category = new Category(categoryId, null, type);
 
 
                 return category;
@@ -66,7 +62,8 @@ public class CategoryDAO extends DAO<Category> {
         return null;
     }
     
-    public Manager getManagerByCategoryId(int categoryId) throws SQLException {
+    
+    public Manager findManagerByCategoryId(int categoryId) throws SQLException {
         String sql = """
             SELECT ma.ManagerID AS PersonID
             FROM Manager ma
@@ -80,7 +77,7 @@ public class CategoryDAO extends DAO<Category> {
 
             if (rs.next()) {
                 int personId = rs.getInt("PersonID");
-                return new ManagerDAO().getManagerByPersonId(personId);
+                return new ManagerDAO().find(personId);
             }
         }
         return null;

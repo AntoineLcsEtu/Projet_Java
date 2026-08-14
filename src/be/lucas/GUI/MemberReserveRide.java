@@ -1,11 +1,12 @@
 package be.lucas.GUI;
 
+import be.lucas.Model.Bike;
 import be.lucas.Model.Member;
 import be.lucas.Model.Ride;
+import be.lucas.Model.Vehicle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Date;
 import java.util.List;
 
 public class MemberReserveRide extends JFrame {
@@ -22,17 +23,22 @@ public class MemberReserveRide extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        JPanel headerPanel = new JPanel(new BorderLayout(0, 8));
+
         JLabel title = new JLabel("RIDES DISPONIBLES (NON RÉSERVÉS)", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setForeground(new Color(0, 102, 204));
-        mainPanel.add(title, BorderLayout.NORTH);
+        headerPanel.add(title, BorderLayout.NORTH);
 
-        JPanel balancePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JLabel balanceLabel = new JLabel("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
+        JLabel balanceLabel = new JLabel(
+            "Solde actuel : " + String.format("%.2f", member.getBalance()) + " €",
+            SwingConstants.CENTER
+        );
         balanceLabel.setFont(new Font("Arial", Font.BOLD, 14));
         balanceLabel.setForeground(Color.BLUE);
-        balancePanel.add(balanceLabel);
-        mainPanel.add(balancePanel, BorderLayout.NORTH);
+        headerPanel.add(balanceLabel, BorderLayout.SOUTH);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         JPanel ridesPanel = new JPanel();
         ridesPanel.setLayout(new GridLayout(0, 1, 10, 10));
@@ -45,10 +51,9 @@ public class MemberReserveRide extends JFrame {
                 JLabel noRides = new JLabel("Aucun ride disponible pour le moment.", SwingConstants.CENTER);
                 ridesPanel.add(noRides);
             } else {
-                for (Ride ride : availableRides) {
-                    JButton rideButton = createRideButton(ride);
-                    ridesPanel.add(rideButton);
-                }
+            	for (Ride ride : availableRides) {
+            	    ridesPanel.add(createRidePanel(ride));
+            	}
             }
         } catch (Exception e) {
             JLabel error = new JLabel("Erreur : " + e.getMessage(), SwingConstants.CENTER);
@@ -62,20 +67,22 @@ public class MemberReserveRide extends JFrame {
         add(mainPanel);
     }
 
-    private JButton createRideButton(Ride ride) {
-        JButton button = new JButton();
-        button.setLayout(new BorderLayout());
-        button.setPreferredSize(new Dimension(650, 100));
+    private JPanel createRidePanel(Ride ride) {
+        JPanel row = new JPanel(new BorderLayout(15, 0));
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        row.setPreferredSize(new Dimension(650, 100));
 
         JPanel infoPanel = new JPanel(new GridLayout(4, 1));
         infoPanel.add(new JLabel("<html><b>Ride ID: " + ride.getId() + "</b></html>"));
-        
+
         String categoryName = "Non spécifiée";
         if (ride.getCategory() != null && ride.getCategory().getType() != null) {
             categoryName = ride.getCategory().getType().name().replace("_", " ");
         }
         infoPanel.add(new JLabel("Catégorie: " + categoryName));
-        
         infoPanel.add(new JLabel("Lieu: " + ride.getStartPlace()));
         infoPanel.add(new JLabel("Date: " + ride.getStartDate()));
 
@@ -85,22 +92,125 @@ public class MemberReserveRide extends JFrame {
         JPanel availPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         availPanel.add(new JLabel("Sièges: " + ride.getAvailableSeatNumber()));
         availPanel.add(new JLabel(" | Vélo: " + ride.getAvailableBikeSpotNumber()));
-        availPanel.add(new JLabel(" | Frais: ", SwingConstants.CENTER));
+        availPanel.add(new JLabel(" | Frais: "));
         JLabel feeLabel = new JLabel(String.format("%.2f", ride.getFee()) + " €");
         feeLabel.setForeground(feeColor);
         availPanel.add(feeLabel);
-        
+
         if (!canAfford) {
-            JLabel warning = new JLabel(" (Solde insuffisant)", SwingConstants.CENTER);
+            JLabel warning = new JLabel(" (Solde insuffisant)");
             warning.setForeground(Color.RED);
             availPanel.add(warning);
         }
 
-        button.add(infoPanel, BorderLayout.CENTER);
-        button.add(availPanel, BorderLayout.SOUTH);
+        JPanel centerBlock = new JPanel(new BorderLayout());
+        centerBlock.add(infoPanel, BorderLayout.CENTER);
+        centerBlock.add(availPanel, BorderLayout.SOUTH);
+        row.add(centerBlock, BorderLayout.CENTER);
 
-        button.addActionListener(e -> showReservationDialog(ride));
-        return button;
+        JButton reserveButton = new JButton("Réserver");
+        reserveButton.setFont(new Font("Arial", Font.BOLD, 14));
+        reserveButton.setFocusPainted(false);
+        reserveButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        reserveButton.setEnabled(canAfford);
+        reserveButton.setToolTipText(canAfford ? "Réserver ce ride" : "Solde insuffisant pour ce ride");
+        reserveButton.addActionListener(e -> showReservationDialog(ride));
+        row.add(reserveButton, BorderLayout.EAST);
+
+        return row;
+    }
+
+    private Vehicle chooseVehicle(List<Vehicle> ownedVehicles) {
+        JPanel selectionPanel = new JPanel();
+        selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel instructionLabel = new JLabel("Vous avez plusieurs véhicules enregistrés :");
+        instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectionPanel.add(instructionLabel);
+        selectionPanel.add(Box.createVerticalStrut(15));
+
+        ButtonGroup vehicleGroup = new ButtonGroup();
+        JRadioButton[] radioButtons = new JRadioButton[ownedVehicles.size()];
+
+        for (int i = 0; i < ownedVehicles.size(); i++) {
+            Vehicle v = ownedVehicles.get(i);
+            String label = String.format(
+                "<html><b>Véhicule #%d</b> — %d siège(s), %d place(s) vélo</html>",
+                v.getId(), v.getSeatNumber(), v.getBikeSpotNumber()
+            );
+            JRadioButton radio = new JRadioButton(label);
+            radio.setFont(new Font("Arial", Font.PLAIN, 13));
+            radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (i == 0) radio.setSelected(true);
+
+            vehicleGroup.add(radio);
+            radioButtons[i] = radio;
+            selectionPanel.add(radio);
+            selectionPanel.add(Box.createVerticalStrut(8));
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this, selectionPanel, "Choisir un véhicule",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) return null;
+
+        for (int i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].isSelected()) {
+                return ownedVehicles.get(i);
+            }
+        }
+        return ownedVehicles.get(0);
+    }
+
+    private Bike chooseBike(List<Bike> ownedBikes) {
+        JPanel selectionPanel = new JPanel();
+        selectionPanel.setLayout(new BoxLayout(selectionPanel, BoxLayout.Y_AXIS));
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel instructionLabel = new JLabel("Vous avez plusieurs vélos enregistrés :");
+        instructionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        instructionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectionPanel.add(instructionLabel);
+        selectionPanel.add(Box.createVerticalStrut(15));
+
+        ButtonGroup bikeGroup = new ButtonGroup();
+        JRadioButton[] radioButtons = new JRadioButton[ownedBikes.size()];
+
+        for (int i = 0; i < ownedBikes.size(); i++) {
+            Bike b = ownedBikes.get(i);
+            String typeLabel = b.getType() != null ? b.getType().name().replace("_", " ") : "Type inconnu";
+            String label = String.format(
+                "<html><b>Vélo #%d</b> — %s, %.1f kg, %.0f cm</html>",
+                b.getId(), typeLabel, b.getWeight(), b.getLength()
+            );
+            JRadioButton radio = new JRadioButton(label);
+            radio.setFont(new Font("Arial", Font.PLAIN, 13));
+            radio.setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (i == 0) radio.setSelected(true);
+
+            bikeGroup.add(radio);
+            radioButtons[i] = radio;
+            selectionPanel.add(radio);
+            selectionPanel.add(Box.createVerticalStrut(8));
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+            this, selectionPanel, "Choisir un vélo",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result != JOptionPane.OK_OPTION) return null;
+
+        for (int i = 0; i < radioButtons.length; i++) {
+            if (radioButtons[i].isSelected()) {
+                return ownedBikes.get(i);
+            }
+        }
+        return ownedBikes.get(0);
     }
 
     private void showReservationDialog(Ride ride) {
@@ -156,9 +266,49 @@ public class MemberReserveRide extends JFrame {
                 return;
             }
 
+            Vehicle selectedVehicle = null;
+            List<Vehicle> ownedVehicles = null;
+            if (isDriver) {
+                try {
+                    ownedVehicles = member.getOwnedVehicles();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (ownedVehicles.size() > 1) {
+                    selectedVehicle = chooseVehicle(ownedVehicles);
+                    if (selectedVehicle == null) {
+                        return;
+                    }
+                } else if (ownedVehicles.size() == 1) {
+                    selectedVehicle = ownedVehicles.get(0);
+                }
+            }
+
+            Bike selectedBike = null;
+            List<Bike> ownedBikes = null;
+            if (isBike) {
+                try {
+                    ownedBikes = member.getOwnedBikes();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (ownedBikes.size() > 1) {
+                    selectedBike = chooseBike(ownedBikes);
+                    if (selectedBike == null) {
+                        return;
+                    }
+                } else if (ownedBikes.size() == 1) {
+                    selectedBike = ownedBikes.get(0);
+                }
+            }
+
             try {
                 double balanceBefore = member.getBalance();
-                boolean success = member.reserveRide(ride, isPassenger, isBike);
+                boolean success = member.reserveRide(ride, isPassenger, isBike, selectedVehicle, selectedBike, ownedVehicles, ownedBikes);
 
                 if (!success) {
                     String msg = isDriver ?
@@ -176,7 +326,7 @@ public class MemberReserveRide extends JFrame {
                 }
 
                 if (isDriver) {
-                    boolean vehicleOk = member.offerVehicleForRide(ride);
+                    boolean vehicleOk = member.offerVehicleForRide(ride, selectedVehicle);
                     if (!vehicleOk) {
                         JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de votre véhicule.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;

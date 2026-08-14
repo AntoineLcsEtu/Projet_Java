@@ -5,21 +5,24 @@ import java.util.List;
 import be.lucas.Model.Treasurer;
 import javax.swing.*;
 import java.awt.*;
+import javax.swing.table.DefaultTableModel;
 
 public class TreasurerVerifyFees extends JFrame {
     private static final long serialVersionUID = 1L;
     private Treasurer treasurer;
-    private JTextArea reportText;
+    private JTable table;
+    private DefaultTableModel model;
+    private JLabel statusLabel;
 
     public TreasurerVerifyFees(Treasurer treasurer) throws Exception {
         this.treasurer = treasurer;
         setTitle("Vérification des Cotisations");
-        setSize(850, 650);
+        setSize(700, 550);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         initUI();
-        refreshReport(); 
+        refreshReport();
     }
 
     private void initUI() {
@@ -27,16 +30,29 @@ public class TreasurerVerifyFees extends JFrame {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JLabel title = new JLabel("RAPPORT DE VÉRIFICATION DES COTISATIONS", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 24));
+        title.setFont(new Font("Arial", Font.BOLD, 22));
         title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        reportText = new JTextArea();
-        reportText.setEditable(false);
-        reportText.setFont(new Font("Consolas", Font.PLAIN, 14));
-        reportText.setBackground(new Color(248, 249, 250));
-        reportText.setMargin(new Insets(15, 15, 15, 15));
-        mainPanel.add(new JScrollPane(reportText), BorderLayout.CENTER);
+        String[] columns = { "Membre", "Solde actuel", "Statut" };
+        model = new DefaultTableModel(columns, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(model);
+        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.setRowHeight(24);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+        table.setFillsViewportHeight(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        statusLabel = new JLabel(" ", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        statusLabel.setForeground(Color.GRAY);
 
         JButton reminderBtn = new JButton("Envoyer les rappels");
         reminderBtn.setFont(new Font("Arial", Font.BOLD, 18));
@@ -47,8 +63,11 @@ public class TreasurerVerifyFees extends JFrame {
         reminderBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         reminderBtn.addActionListener(e -> sendReminders());
 
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.add(reminderBtn);
+        JPanel bottomPanel = new JPanel(new BorderLayout(0, 10));
+        bottomPanel.add(statusLabel, BorderLayout.NORTH);
+        JPanel btnWrap = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnWrap.add(reminderBtn);
+        bottomPanel.add(btnWrap, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
@@ -57,44 +76,45 @@ public class TreasurerVerifyFees extends JFrame {
     private void refreshReport() {
         try {
             List<Member> members = treasurer.getMembershipReport();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("═══════════════════════════════════════════════════════════════════════\n");
-            sb.append("           RAPPORT DE VÉRIFICATION DES COTISATIONS\n");
-            sb.append("═══════════════════════════════════════════════════════════════════════\n\n");
-
-            if (members.isEmpty()) {
-                sb.append("Aucun membre trouvé.\n");
-            } else {
-                int paidCount = 0, unpaidCount = 0;
-
-                for (int i = 0; i < members.size(); i++) {
-                    Member m = members.get(i);
-                    boolean isPaid = m.isMembershipPaid();
-
-                    if (isPaid) paidCount++;
-                    else unpaidCount++;
-
-                    sb.append(String.format("%3d. %s %s\n", i + 1, m.getFirstName(), m.getName()));
-                    sb.append(String.format("     Solde actuel   : %.2f €\n", m.getBalance()));
-                    sb.append(String.format("     Statut         : %s\n",
-                            isPaid ? "PAYÉE " : "NON PAYÉE"));
-                    sb.append("     " + "-".repeat(60) + "\n");
-                }
-
-                sb.append(String.format("\nRÉSUMÉ : %d membre(s) à jour | %d membre(s) non à jour\n", paidCount, unpaidCount));
-            }
-
-            reportText.setText(sb.toString());
+            refreshReport(members);
         } catch (Exception ex) {
-            reportText.setText("Erreur lors du chargement du rapport :\n" + ex.getMessage());
+            statusLabel.setText("Erreur lors du chargement du rapport : " + ex.getMessage());
+            statusLabel.setForeground(Color.RED);
             JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    private void refreshReport(List<Member> members) {
+        model.setRowCount(0);
+
+        if (members.isEmpty()) {
+            statusLabel.setText("Aucun membre trouvé.");
+            statusLabel.setForeground(Color.GRAY);
+            return;
+        }
+
+        int paidCount = 0, unpaidCount = 0;
+
+        for (Member m : members) {
+            boolean isPaid = m.isMembershipPaid();
+            if (isPaid) paidCount++;
+            else unpaidCount++;
+
+            model.addRow(new Object[] {
+                m.getFirstName() + " " + m.getName(),
+                String.format("%.2f €", m.getBalance()),
+                isPaid ? "Payée" : "Non payée"
+            });
+        }
+
+        statusLabel.setText(paidCount + " membre(s) à jour  •  " + unpaidCount + " membre(s) non à jour");
+        statusLabel.setForeground(Color.GRAY);
+    }
+
     private void sendReminders() {
         try {
-            List<Member> unpaidMembers = treasurer.getUnpaidMembers();
+            List<Member> members = treasurer.getMembershipReport();
+            List<Member> unpaidMembers = treasurer.getUnpaidMembers(members);
 
             String resultMessage;
             if (unpaidMembers.isEmpty()) {
@@ -121,7 +141,7 @@ public class TreasurerVerifyFees extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE
             );
 
-            refreshReport(); 
+            refreshReport(members);
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,

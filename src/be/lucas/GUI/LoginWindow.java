@@ -17,7 +17,7 @@ public class LoginWindow extends JFrame {
 
     public LoginWindow() {
         setTitle("Connexion - Club Vélo");
-        setSize(700, 500);
+        setSize(420, 320);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -49,6 +49,15 @@ public class LoginWindow extends JFrame {
         add(mainPanel);
 
         loginButton.addActionListener(e -> handleLogin());
+        idField.addActionListener(e -> passwordField.requestFocusInWindow());
+        passwordField.addActionListener(e -> handleLogin());
+
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowOpened(java.awt.event.WindowEvent e) {
+                idField.requestFocusInWindow();
+            }
+        });
     }
 
     private void handleLogin() {

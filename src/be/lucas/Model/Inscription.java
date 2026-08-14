@@ -44,6 +44,7 @@ public class Inscription {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Inscription inscription = (Inscription) o;
+        if (id == 0 || inscription.id == 0) return false;
         return id == inscription.id;
     }
 

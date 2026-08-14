@@ -90,52 +90,59 @@ public class MemberPayMembership extends JFrame {
         centerPanel.add(creditButton, gbc);
 
         creditButton.addActionListener(e -> creditBalanceFromUI());
+        amountField.addActionListener(e -> creditBalanceFromUI());
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
         add(mainPanel);
     }
 
     private void refreshInfo() {
-        balanceLabel.setText("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
-
         try {
             int catCount = member.getCategoryCount();
-            double fee = member.calculateMembershipFee();
-
-            feeLabel.setText(
-            	    "<html><center>Cotisation : 20 € + " + catCount + " catégorie(s) × 5 €<br>" +
-            	    "<b style='font-size:18px; color:#0066CC;'>Total : " + String.format("%.2f", fee) + " €</b></center></html>"
-            	);
-
-            if (member.isMembershipPaid()) {
-                payButton.setEnabled(false);
-                payButton.setText("Cotisation déjà payée ");
-                payButton.setBackground(new Color(200, 200,200));
-            } else {
-                payButton.setEnabled(true);
-                payButton.setText("Payer la cotisation");
-                payButton.setBackground(Color.WHITE);
-            }
+            refreshInfo(catCount);
         } catch (Exception ex) {
             feeLabel.setText("<html><center><span style='color:red;'>Erreur de calcul</span></center></html>");
             payButton.setEnabled(false);
         }
     }
 
+    private void refreshInfo(int catCount) {
+        balanceLabel.setText("Solde actuel : " + String.format("%.2f", member.getBalance()) + " €");
+
+        double fee = member.calculateMembershipFee(catCount);
+
+        feeLabel.setText(
+        	    "<html><center>Cotisation : 20 € + " + catCount + " catégorie(s) × 5 €<br>" +
+        	    "<b style='font-size:18px; color:#0066CC;'>Total : " + String.format("%.2f", fee) + " €</b></center></html>"
+        	);
+
+        if (member.isMembershipPaid()) {
+            payButton.setEnabled(false);
+            payButton.setText("Cotisation déjà payée ");
+            payButton.setBackground(new Color(200, 200,200));
+        } else {
+            payButton.setEnabled(true);
+            payButton.setText("Payer la cotisation");
+            payButton.setBackground(Color.WHITE);
+        }
+    }
+
     private void payMembership() {
         try {
-            if (!member.canPayMembership()) {
+            int catCount = member.getCategoryCount();
+
+            if (!member.canPayMembership(catCount)) {
                 JOptionPane.showMessageDialog(this,
                     "<html><b>Solde insuffisant !</b><br>" +
-                    "Requis : " + String.format("%.2f", member.calculateMembershipFee()) + " €<br>" +
+                    "Requis : " + String.format("%.2f", member.calculateMembershipFee(catCount)) + " €<br>" +
                     "Disponible : " + String.format("%.2f", member.getBalance()) + " €</html>",
                     "Paiement impossible", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            boolean ok = member.payMembership();
+            boolean ok = member.payMembership(catCount);
             if (ok) {
-                refreshInfo();
+                refreshInfo(catCount);
                 JOptionPane.showMessageDialog(this,
                     "Cotisation payée avec succès !\nNouveau solde : " + String.format("%.2f", member.getBalance()) + " €",
                     "Succès", JOptionPane.INFORMATION_MESSAGE);

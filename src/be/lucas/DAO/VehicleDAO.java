@@ -4,6 +4,8 @@ import be.lucas.Model.Vehicle;
 import be.lucas.util.DBConnection;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VehicleDAO extends DAO<Vehicle> {
 
@@ -13,23 +15,35 @@ public class VehicleDAO extends DAO<Vehicle> {
 	        return false;
 	    }
 
+	    String maxSql = "SELECT COALESCE(MAX(VehicleID), 0) AS MaxID FROM Vehicle";
+	    int newId = 1;
+
+	    try (Connection conn = DBConnection.getConnection();
+	         PreparedStatement ps = conn.prepareStatement(maxSql);
+	         ResultSet rs = ps.executeQuery()) {
+	        if (rs.next()) {
+	            newId = rs.getInt("MaxID") + 1;
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+
 	    String sql = """
-	        INSERT INTO Vehicle (SeatNumber, BikeSpotNumber, DriverID)
-	        VALUES (?, ?, ?)
+	        INSERT INTO Vehicle (VehicleID, SeatNumber, BikeSpotNumber, DriverID)
+	        VALUES (?, ?, ?, ?)
 	        """;
 
 	    try (Connection conn = DBConnection.getConnection();
-	         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-	        ps.setInt(1, obj.getSeatNumber());
-	        ps.setInt(2, obj.getBikeSpotNumber());
-	        ps.setInt(3, obj.getDriver().getId());
+	        ps.setInt(1, newId);
+	        ps.setInt(2, obj.getSeatNumber());
+	        ps.setInt(3, obj.getBikeSpotNumber());
+	        ps.setInt(4, obj.getDriver().getId());
 
 	        if (ps.executeUpdate() > 0) {
-	            ResultSet rs = ps.getGeneratedKeys();
-	            if (rs.next()) {
-	                obj.setId(rs.getInt(1));
-	            }
+	            obj.setId(newId);
 	            return true;
 	        }
 	    } catch (SQLException e) {
@@ -68,20 +82,21 @@ public class VehicleDAO extends DAO<Vehicle> {
         return null;
     }
 
-    public Vehicle getVehicleByDriverId(int personId) throws SQLException {
-        String sql = "SELECT * FROM Vehicle WHERE DriverID = ?";
+    public List<Vehicle> findVehiclesByDriverId(int personId) throws SQLException {
+        List<Vehicle> vehicles = new ArrayList<>();
+        String sql = "SELECT VehicleID, SeatNumber, BikeSpotNumber FROM Vehicle WHERE DriverID = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, personId);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return new Vehicle(
+            while (rs.next()) {
+                vehicles.add(new Vehicle(
                     rs.getInt("VehicleID"),
                     rs.getInt("SeatNumber"),
                     rs.getInt("BikeSpotNumber")
-                );
+                ));
             }
         }
-        return null;
+        return vehicles;
     }
 }

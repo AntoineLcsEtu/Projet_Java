@@ -6,13 +6,15 @@ import be.lucas.Model.Ride;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.table.DefaultTableModel;
 
 public class MemberAvailability extends JFrame {
     private static final long serialVersionUID = 1L;
+    private static final java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-    public MemberAvailability(Member member) {  
+    public MemberAvailability(Member member) {
         setTitle("Mes Réservations - " + member.getFirstName() + " " + member.getName());
-        setSize(700, 500);
+        setSize(1000, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -24,45 +26,59 @@ public class MemberAvailability extends JFrame {
         title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        textArea.setBackground(new Color(248, 249, 250));
-        textArea.setMargin(new Insets(10, 10, 10, 10));
+        String[] columns = { "Ride ID", "Lieu", "Date", "Frais", "Sièges dispo.", "Vélo dispo.", "Statut conducteurs" };
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        statusLabel.setForeground(Color.GRAY);
 
         try {
             List<Ride> reservedRides = member.getReservedRides();
 
-            StringBuilder sb = new StringBuilder("=== MES RÉSERVATIONS ===\n\n");
             if (reservedRides.isEmpty()) {
-                sb.append("Vous n'avez réservé aucun ride pour le moment.\n");
+                statusLabel.setText("Vous n'avez réservé aucun ride pour le moment.");
             } else {
-                for (int i = 0; i < reservedRides.size(); i++) {
-                    Ride ride = reservedRides.get(i);
+                for (Ride ride : reservedRides) {
+                	int missingDrivers = ride.getMissingDriversCount();
+                	String driverStatus = missingDrivers > 0
+                	    ? missingDrivers + " véhicule(s) sans conducteur"
+                	    : "Conducteur OK";
 
-                    sb.append("Réservation ").append(i + 1).append(" :\n");
-                    sb.append("  Ride ID: ").append(ride.getId()).append("\n");
-                    sb.append("  Lieu: ").append(ride.getStartPlace()).append("\n");
-                    sb.append("  Date: ").append(ride.getStartDate()).append("\n");
-                    sb.append("  Frais: ").append(ride.getFee()).append(" €\n");
-                    sb.append("  Sièges disponibles: ").append(ride.getAvailableSeatNumber()).append("\n");
-                    sb.append("  Places vélo disponibles: ").append(ride.getAvailableBikeSpotNumber()).append("\n");
-                    int missingDrivers = ride.getMissingDriversCount();
-                    String driverStatus = missingDrivers > 0
-                        ? "Besoin de " + missingDrivers + " conducteur(s)"
-                        : "Tous les véhicules ont un conducteur";
-                    sb.append("  Conducteurs: ").append(driverStatus).append("\n");              
-                    sb.append("----------------------------------------\n");
+                    model.addRow(new Object[] {
+                        ride.getId(),
+                        ride.getStartPlace(),
+                        sdf.format(ride.getStartDate()),
+                        String.format("%.2f €", ride.getFee()),
+                        ride.getAvailableSeatNumber(),
+                        ride.getAvailableBikeSpotNumber(),
+                        driverStatus
+                    });
                 }
+                statusLabel.setText(reservedRides.size() + " réservation(s)");
             }
-            textArea.setText(sb.toString());
-
         } catch (Exception e) {
-            textArea.setText("Erreur : " + e.getMessage());
+            statusLabel.setText("Erreur : " + e.getMessage());
+            statusLabel.setForeground(Color.RED);
             e.printStackTrace();
         }
 
-        mainPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+        JTable table = new JTable(model);
+        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.setRowHeight(24);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+        table.setFillsViewportHeight(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        mainPanel.add(statusLabel, BorderLayout.SOUTH);
+
         add(mainPanel);
     }
 }

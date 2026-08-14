@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import javax.swing.table.DefaultTableModel;
 
 public class ManagerAvailability extends JFrame {
 
@@ -18,7 +19,7 @@ public class ManagerAvailability extends JFrame {
     public ManagerAvailability(Manager manager) {
         this.manager = manager;
         setTitle("Disponibilités - " + manager.getFirstName() + " " + manager.getName());
-        setSize(700, 500);
+        setSize(1400, 500);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -33,55 +34,64 @@ public class ManagerAvailability extends JFrame {
         title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        textArea.setBackground(new Color(248, 249, 250));
-        textArea.setMargin(new Insets(10, 10, 10, 10));
+        String[] columns = { "Ride ID", "Lieu", "Date", "Frais", "Sièges", "Vélo", "Inscrits", "Statut conducteurs" };
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("═══════════════════════════════════════════════════════════════════════════\n");
-        sb.append("           DISPONIBILITÉS DES RIDES - ").append(categoryName.toUpperCase()).append("\n");
-        sb.append("═══════════════════════════════════════════════════════════════════════════\n\n");
+        JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        statusLabel.setForeground(Color.GRAY);
 
         try {
-        	if (manager.getCategory() == null) {
-        	    sb.append("Aucune catégorie associée au manager.\n");
-        	} else {
-        	    List<Ride> categoryRides = manager.getRidesInMyCategory();
+            if (manager.getCategory() == null) {
+                statusLabel.setText("Aucune catégorie associée au manager.");
+            } else {
+                List<Ride> categoryRides = manager.getRidesInMyCategory();
 
-        	    if (categoryRides.isEmpty()) {
-                    sb.append("Aucun ride publié dans votre catégorie.\n");
+                if (categoryRides.isEmpty()) {
+                    statusLabel.setText("Aucun ride publié dans votre catégorie.");
                 } else {
-                    for (int i = 0; i < categoryRides.size(); i++) {
-                        Ride r = categoryRides.get(i);
-
-                        sb.append(String.format("%d. RIDE ID: %d\n", i + 1, r.getId()));
-                        sb.append(String.format("   Lieu de départ : %s\n", r.getStartPlace()));
-                        sb.append(String.format("   Date/Heure     : %s\n", sdf.format(r.getStartDate())));
-                        sb.append(String.format("   Frais          : %.2f €\n", r.getFee()));
-                        sb.append(String.format("   Sièges         : %d disponibles / %d total\n", 
-                            r.getAvailableSeatNumber(), r.getTotalSeatNumber()));
-                        sb.append(String.format("   Places vélo    : %d disponibles / %d total\n", 
-                            r.getAvailableBikeSpotNumber(), r.getTotalBikeSpotNumber()));
-                        sb.append(String.format("   Inscrits       : %d passager(s) + %d vélo(s)\n", 
-                            r.getNeededSeatNumber(), r.getNeededBikeSpotNumber()));
+                    for (Ride r : categoryRides) {
                         int missingDrivers = r.getMissingDriversCount();
                         String driverStatus = missingDrivers > 0
-                            ? "Besoin de " + missingDrivers + " conducteur(s)"
-                            : "Tous les véhicules ont un conducteur";
-                        sb.append(String.format("   Conducteurs    : %s\n", driverStatus));
-                        sb.append("   " + "─".repeat(70) + "\n");
+                            ? missingDrivers + " manquant(s)"
+                            : "Conducteurs OK";
+
+                        model.addRow(new Object[] {
+                            r.getId(),
+                            r.getStartPlace(),
+                            sdf.format(r.getStartDate()),
+                            String.format("%.2f €", r.getFee()),
+                            r.getAvailableSeatNumber() + " / " + r.getTotalSeatNumber(),
+                            r.getAvailableBikeSpotNumber() + " / " + r.getTotalBikeSpotNumber(),
+                            r.getNeededSeatNumber() + " pass. + " + r.getNeededBikeSpotNumber() + " vélo(s)",
+                            driverStatus
+                        });
                     }
+                    statusLabel.setText(categoryRides.size() + " ride(s) publié(s)");
                 }
             }
         } catch (Exception e) {
-            sb.append("ERREUR : ").append(e.getMessage()).append("\n");
+            statusLabel.setText("Erreur : " + e.getMessage());
+            statusLabel.setForeground(Color.RED);
             e.printStackTrace();
         }
 
-        textArea.setText(sb.toString());
-        mainPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
+        JTable table = new JTable(model);
+        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.setRowHeight(24);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+        table.setFillsViewportHeight(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        mainPanel.add(statusLabel, BorderLayout.SOUTH);
+
         add(mainPanel);
     }
 }

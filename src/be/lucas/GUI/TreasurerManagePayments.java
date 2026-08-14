@@ -6,18 +6,21 @@ import be.lucas.Model.Member;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.table.DefaultTableModel;
 
 public class TreasurerManagePayments extends JFrame {
     private static final long serialVersionUID = 1L;
     private Treasurer treasurer;
-    private JTextArea logArea;
+    private JTable table;
+    private DefaultTableModel model;
+    private JLabel statusLabel;
     private JButton payButton;
     private boolean paymentAlreadyDone = false;
 
     public TreasurerManagePayments(Treasurer treasurer) {
         this.treasurer = treasurer;
         setTitle("Paiement Conducteurs - " + treasurer.getFirstName() + " " + treasurer.getName());
-        setSize(850, 650);
+        setSize(750, 550);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -29,14 +32,25 @@ public class TreasurerManagePayments extends JFrame {
         title.setForeground(new Color(0, 102, 204));
         mainPanel.add(title, BorderLayout.NORTH);
 
-        logArea = new JTextArea();
-        logArea.setEditable(false);
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        logArea.setBackground(new Color(248, 249, 250));
-        logArea.setMargin(new Insets(15, 15, 15, 15));
-        mainPanel.add(new JScrollPane(logArea), BorderLayout.CENTER);
+        String[] columns = { "Conducteur", "Véhicule", "Montant", "Statut" };
+        model = new DefaultTableModel(columns, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(model);
+        table.setFont(new Font("Arial", Font.PLAIN, 13));
+        table.setRowHeight(24);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
+        table.setFillsViewportHeight(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        mainPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        statusLabel = new JLabel(" ", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        statusLabel.setForeground(Color.GRAY);
 
         payButton = new JButton("PAYER LES CONDUCTEURS MAINTENANT");
         payButton.setFont(new Font("Arial", Font.BOLD, 16));
@@ -45,66 +59,58 @@ public class TreasurerManagePayments extends JFrame {
         payButton.setFocusPainted(false);
         payButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         payButton.setPreferredSize(new Dimension(380, 50));
-
-        buttonPanel.add(payButton);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
         payButton.addActionListener(e -> executePayment());
+
+        JPanel bottomPanel = new JPanel(new BorderLayout(0, 10));
+        bottomPanel.add(statusLabel, BorderLayout.NORTH);
+        JPanel btnWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        btnWrap.add(payButton);
+        bottomPanel.add(btnWrap, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
 
-        refreshPreview(); 
+        refreshPreview();
     }
 
     private void refreshPreview() {
-        StringBuilder preview = new StringBuilder();
-        preview.append("═══════════════════════════════════════════════════════════════════════\n");
-        preview.append("           PRÉVISUALISATION DES PAIEMENTS À EFFECTUER\n");
-        preview.append("═══════════════════════════════════════════════════════════════════════\n\n");
+        model.setRowCount(0);
 
         try {
-            List<Member> drivers = treasurer.getDriversToPay();  
+            List<Member> drivers = treasurer.getDriversToPay();
 
             if (drivers.isEmpty()) {
-                preview.append("Aucun conducteur à payer pour le moment.\n\n");
-                preview.append("Tous les rides terminés ont déjà été réglés.\n");
+                statusLabel.setText("Aucun conducteur à payer pour le moment — tous les rides terminés sont réglés.");
                 payButton.setEnabled(false);
                 payButton.setText("AUCUN PAIEMENT NÉCESSAIRE");
                 payButton.setBackground(new Color(180, 180, 180));
-            } else {
-                double totalToPay = 0.0;
-
-                for (int i = 0; i < drivers.size(); i++) {
-                    Member driver = drivers.get(i);
-                    double fee = driver.getDrivenVehicle().calculateDriverFee();
-                    
-                    totalToPay += fee;
-
-                    preview.append(String.format("%2d. %s %s\n", i + 1, driver.getFirstName(), driver.getName()));
-                    preview.append(String.format("    → Véhicule : %d places + %d empl. vélo\n",
-                            driver.getDrivenVehicle().getSeatNumber(),
-                            driver.getDrivenVehicle().getBikeSpotNumber()));
-                    preview.append(String.format("    → Gain prévu : %.2f €\n", fee));
-                    preview.append("    " + "─".repeat(60) + "\n");
-                }
-
-                preview.append("\n");
-                preview.append("═".repeat(75)).append("\n");
-                preview.append(String.format("   TOTAL À VERSER : %.2f €\n", totalToPay));
-                preview.append(String.format("   CONDUCTEURS CONCERNÉS : %d\n", drivers.size()));
-                preview.append("═".repeat(75)).append("\n\n");
-                preview.append("Cliquez sur le bouton vert pour valider le paiement.\n");
-                preview.append("Cette action est irréversible et crédite immédiatement les soldes.\n");
+                return;
             }
 
+            double totalToPay = 0.0;
+            for (Member driver : drivers) {
+                double fee = driver.getDrivenVehicle().calculateDriverFee();
+                totalToPay += fee;
+
+                model.addRow(new Object[] {
+                    driver.getFirstName() + " " + driver.getName(),
+                    driver.getDrivenVehicle().getSeatNumber() + " places + " + driver.getDrivenVehicle().getBikeSpotNumber() + " empl. vélo",
+                    String.format("%.2f €", fee),
+                    "À payer"
+                });
+            }
+
+            statusLabel.setText(String.format(
+                "TOTAL À VERSER : %.2f €  •  %d conducteur(s) concerné(s)  —  action irréversible",
+                totalToPay, drivers.size()
+            ));
+
         } catch (Exception ex) {
-            preview.append("ERREUR lors du chargement :\n");
-            preview.append(ex.getMessage() + "\n");
+            statusLabel.setText("Erreur lors du chargement : " + ex.getMessage());
+            statusLabel.setForeground(Color.RED);
             payButton.setEnabled(false);
             ex.printStackTrace();
         }
-
-        logArea.setText(preview.toString());
     }
 
     private void executePayment() {
@@ -133,40 +139,45 @@ public class TreasurerManagePayments extends JFrame {
         payButton.setEnabled(false);
         payButton.setText("PAIEMENT EN COURS...");
         payButton.setBackground(new Color(255, 153, 0));
-
-        logArea.append("\nPaiement en cours, veuillez patienter...\n\n");
-        logArea.setCaretPosition(logArea.getDocument().getLength());
+        statusLabel.setText("Paiement en cours, veuillez patienter...");
 
         try {
-        	Object[] result = treasurer.payDriver();
-        	@SuppressWarnings("unchecked")
-        	List<Member> paidDrivers = (List<Member>) result[0];
-        	@SuppressWarnings("unchecked")
-        	List<Member> failedDrivers = (List<Member>) result[1];
-        	double totalPaid = (Double) result[2];
+            Object[] result = treasurer.payDriver();
+            @SuppressWarnings("unchecked")
+            List<Member> paidDrivers = (List<Member>) result[0];
+            @SuppressWarnings("unchecked")
+            List<Member> failedDrivers = (List<Member>) result[1];
+            double totalPaid = (Double) result[2];
 
-        	StringBuilder log = new StringBuilder();
-        	if (paidDrivers.isEmpty() && failedDrivers.isEmpty()) {
-        	    log.append("Aucun conducteur à payer (aucun ride terminé).\n");
-        	} else {
-        	    for (Member driver : paidDrivers) {
-        	        double fee = driver.getDrivenVehicle().calculateDriverFee();
-        	        log.append(String.format("✓ %s %s : +%.2f € (sièges: %d, vélo: %d)\n",
-        	                driver.getFirstName(), driver.getName(), fee,
-        	                driver.getDrivenVehicle().getSeatNumber(),
-        	                driver.getDrivenVehicle().getBikeSpotNumber()));
-        	    }
-        	    for (Member driver : failedDrivers) {
-        	        log.append(String.format("✗ ÉCHEC pour %s %s\n", driver.getFirstName(), driver.getName()));
-        	    }
-        	    log.append("\n").append("═".repeat(50)).append("\n");
-        	    log.append(String.format("RÉSUMÉ : %d conducteur(s) payé(s) | Total : %.2f €\n", paidDrivers.size(), totalPaid));
-        	}
+            model.setRowCount(0);
 
-        	String logText = log.toString();
-        	logArea.setText(logText);
+            if (paidDrivers.isEmpty() && failedDrivers.isEmpty()) {
+                statusLabel.setText("Aucun conducteur à payer (aucun ride terminé).");
+            } else {
+                for (Member driver : paidDrivers) {
+                    double fee = driver.getDrivenVehicle().calculateDriverFee();
+                    model.addRow(new Object[] {
+                        driver.getFirstName() + " " + driver.getName(),
+                        driver.getDrivenVehicle().getSeatNumber() + " places + " + driver.getDrivenVehicle().getBikeSpotNumber() + " empl. vélo",
+                        String.format("%.2f €", fee),
+                        "✓ Payé"
+                    });
+                }
+                for (Member driver : failedDrivers) {
+                    model.addRow(new Object[] {
+                        driver.getFirstName() + " " + driver.getName(),
+                        "-",
+                        "-",
+                        "✗ Échec"
+                    });
+                }
+                statusLabel.setText(String.format(
+                    "RÉSUMÉ : %d conducteur(s) payé(s)  •  Total : %.2f €",
+                    paidDrivers.size(), totalPaid
+                ));
+            }
 
-            payButton.setText("PAIEMENT EFFECTUÉ ");
+            payButton.setText("PAIEMENT EFFECTUÉ");
             payButton.setBackground(new Color(0, 153, 76));
             payButton.setEnabled(false);
 
@@ -178,10 +189,9 @@ public class TreasurerManagePayments extends JFrame {
                 "Les soldes sont à jour.</html>",
                 "Succès", JOptionPane.INFORMATION_MESSAGE);
 
-            refreshPreview();
-
         } catch (Exception ex) {
-            logArea.append("\nERREUR FATALE : " + ex.getMessage() + "\n");
+            statusLabel.setText("ERREUR FATALE : " + ex.getMessage());
+            statusLabel.setForeground(Color.RED);
             payButton.setText("ÉCHEC DU PAIEMENT");
             payButton.setBackground(Color.RED);
             payButton.setEnabled(false);
